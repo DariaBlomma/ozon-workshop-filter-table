@@ -18,7 +18,8 @@ export default {
   render() {
     const { $style, shown, filterText, $listeners } = this;
     const { openFilterTooltip, setFilterText, closeFilterTooltip } = $listeners;
-
+    // ? lsiteners эмитятся из v-dropdown?
+    // ? какой плагин v-dropdown, где его импорт?
     return (
       <v-dropdown
         class={$style.filterIcon}

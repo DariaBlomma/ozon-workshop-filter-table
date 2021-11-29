@@ -1,4 +1,5 @@
 <template>
+<div>
   <!--  @getPage="infGetPage" для бесконечной пагиинации -->
   <!-- @getPage="getPage" для тстатической пагинации -->
   <oz-table
@@ -30,6 +31,17 @@
 
     <oz-table-column prop="name" title="Name" />
   </oz-table>
+  <FiltersWrapper 
+    :static-paging="staticPaging"
+    :fallback-array="fetchedRows"
+    :refilter="refilter"
+    :requiredLength="requiredRowsLength"
+    :renderedRows="renderedRowsLength"
+
+    @filter="filterList"
+  />
+</div>
+
 </template>
 
 <script>
@@ -37,22 +49,24 @@ import { orderBy } from 'lodash/collection';
 // todo - фильтры должны учитывать тип данные, м.б range, cheeckbox
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
+import FiltersWrapper from './filters-wrapper';
 
 export default {
   name: 'Common',
   components: {
     OzTableColumn,
-    OzTable
+    OzTable,
+    FiltersWrapper,
   },
   async created() {
     if (this.staticPaging) {
       this.fetchAllPages();
     } else {
-      // нужно для получения первой страницы при загрузке
+      // * нужно для получения первой страницы при загрузке
       this.blockingPromise = this.fetchFirstPage();
     }
   },   
-  // для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
+  // * для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
   data() {
     return {
       staticPaging: false,
@@ -61,6 +75,7 @@ export default {
       newRows: [],
       afterNewRows: [],
       renderedRows: 0,
+      renderedRowsLength: 0,
       allPages: [],
       list: [],
       currentPage: 1,
@@ -81,6 +96,9 @@ export default {
       canBeFiltered: true,
       uniqueFiltered: false,
       nextPageFetchedCount: 0,
+      hasFilter: false,
+      hasSort: false,
+      refilter: false,
     };
   },
   computed: {
@@ -135,27 +153,50 @@ export default {
         this.canBeFiltered = true;
       }
     },
-    async filterList() {
-      let array = [];
-      if (this.isSorted) {
-        if (!this.staticPaging) {
-          array = this.fetchedRows;          
-        } else {
-          array = this.sortedList;
-        }
+    filterList(list) {
+      this.hasFilter = true;
+      if (this.staticPaging) {
+        this.preparePages(list);
+        this.getPage(this.currentPage);
       } else {
-        if (!this.staticPaging) {
-          array = this.fetchedRows;          
-        } else {
-          array = this.allPages;
+        this.rows = list;
+        console.log('this.rows: ', this.rows);
+        // this.rememberCurrentPage();
+        // this.getRequiredRowsLength();
+
+        // if (this.renderedRows >= this.requiredRowsLength) {
+        //   this.refilter = false;
+        //   console.log('more or equal')
+        // }
+
+        if (this.renderedRows < this.requiredRowsLength) {
+          this.refilter = true;
+          // console.log('this.refilter: ', this.refilter);
+          console.log('less')
         }
-      }
-      
-      this.filteredList =  array.filter(row => row[this.sortFilterInfo.filterProp].search(this.sortFilterInfo.filterText) > -1);
-      if (!this.staticPaging) {
-        this.rows = this.filteredList;
       }
     },
+    // async filterList() {
+    //   let array = [];
+    //   if (this.isSorted) {
+    //     if (!this.staticPaging) {
+    //       array = this.fetchedRows;          
+    //     } else {
+    //       array = this.sortedList;
+    //     }
+    //   } else {
+    //     if (!this.staticPaging) {
+    //       array = this.fetchedRows;          
+    //     } else {
+    //       array = this.allPages;
+    //     }
+    //   }
+      
+    //   this.filteredList =  array.filter(row => row[this.sortFilterInfo.filterProp].search(this.sortFilterInfo.filterText) > -1);
+    //   if (!this.staticPaging) {
+    //     this.rows = this.filteredList;
+    //   }
+    // },
     addFilter(value) {  
       this.isFiltered = true;
       this.sortFilterInfo = value;
@@ -238,10 +279,10 @@ export default {
       }
       return this.requiredRowsLength;
     },
-    filterUniqueRows() {
+    filterUniqueRows(array) {
        // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
       this.uniqueFiltered = false;
-      this.rows = this.filteredList.filter((value, index, array) => {
+      this.rows = array.filter((value, index, array) => {
         if (array[index - 1]) {
           return array[index - 1].id !== value.id;
         }
@@ -254,54 +295,91 @@ export default {
       await this.fetchNextPage() && this.newRowsFetched;
       
       this.renderedRows = this.$children[0].$refs.tbody.children.length;
+      this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
 
-        if (!this.sortFilterInfo.filterProp && !this.sortFilterInfo.sortProp) {
+        // if (!this.sortFilterInfo.filterProp && !this.sortFilterInfo.sortProp) {
+        //   this.rows = this.fetchedRows;
+        // }
+        // * проверка на отсутствие фильтров и сортировки нужна, чтобы отфильтрованные ряды были в приоритете, а не сбрасывались здесь на fetchedRows
+        if (!this.hasFilter && !this.hasSort) {
           this.rows = this.fetchedRows;
         }
-      
         this.currentPage++;
-        if (this.sortFilterInfo.filterProp) {     
+        if (this.hasFilter) {
           this.rememberCurrentPage();
           this.getRequiredRowsLength();
-          // повторный вызов нужен для фильтрации по новополученным полям
-          this.filterList();
+        }
+        if (this.renderedRows < this.requiredRowsLength) {
+          console.log('this.requiredRowsLength: ', this.requiredRowsLength);
+          console.log('this.renderedRows: ', this.renderedRows);
+          console.log('less')
+          
+          
+          // this.rows = [...this.rows, ...this.newRows];
 
-          if (this.renderedRows < this.requiredRowsLength) {
-            if (this.canBeFiltered) {
-              this.canBeSorted = false;
-            }
-            // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-            this.filterUniqueRows();
+          this.filterUniqueRows(this.rows);
 
-            if (this.uniqueFiltered) {
-              await this.infGetPage();
-            }      
+          if (this.uniqueFiltered) {
+            // todo - новые страницы догружаются и фильтруются, но старые пропадают
+            // await this.infGetPage();
+          }
+        } else {
+          console.log('more or equal')
+        }
+        //     // if (this.canBeFiltered) {
+        //     //   this.canBeSorted = false;
+        //     // }
+        //     // // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
+        //     // this.filterUniqueRows();
 
-          } else {
-            this.filterUniqueRows();
-            this.rememberLengthCount = 0;
-            this.rememberCurrentPage(true);
-            this.canBeSorted = true;
+        //     // if (this.uniqueFiltered) {
+        //     //   await this.infGetPage();
+        //     // }
+        
+        // this.currentPage++;
+        console.log(this.rows);
+        // if (this.sortFilterInfo.filterProp) {     
+        //   this.rememberCurrentPage();
+        //   this.getRequiredRowsLength();
+        //   // повторный вызов нужен для фильтрации по новополученным полям
+        //   this.filterList();
+
+        //   if (this.renderedRows < this.requiredRowsLength) {
+        //     if (this.canBeFiltered) {
+        //       this.canBeSorted = false;
+        //     }
+        //     // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
+        //     this.filterUniqueRows();
+
+        //     if (this.uniqueFiltered) {
+        //       await this.infGetPage();
+        //     }      
+
+        //   } else {
+        //     this.filterUniqueRows();
+        //     this.rememberLengthCount = 0;
+        //     this.rememberCurrentPage(true);
+        //     this.canBeSorted = true;
             
-            if (this.sortFilterInfo.sortProp) {
-              if (this.canBeSorted) {
-                this.sortList();
-              }
-            }
-          }
-        }
+        //     if (this.sortFilterInfo.sortProp) {
+        //       if (this.canBeSorted) {
+        //         this.sortList();
+        //       }
+        //     }
+        //   }
+        // }
 
-        if (this.sortFilterInfo.sortProp) {
-          if (!this.sortFilterInfo.filterProp) {
-            // убираем дубликаты после удаления фильтра
-            this.filterUniqueRows();
-            if (this.uniqueFiltered) {
-              this.sortList();
-            }        
-          }
-        }
+        // if (this.sortFilterInfo.sortProp) {
+        //   if (!this.sortFilterInfo.filterProp) {
+        //     // убираем дубликаты после удаления фильтра
+        //     this.filterUniqueRows();
+        //     if (this.uniqueFiltered) {
+        //       this.sortList();
+        //     }        
+        //   }
+        // }
 
       } else {
         this.emptyMessage = 'There are no more pages left';
