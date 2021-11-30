@@ -44,6 +44,7 @@
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
+                    @click="removeFilter('email')"
                 />
             </label>
         </div>
@@ -61,6 +62,7 @@
 </template>
 <script>
 import _ from 'lodash';
+// import Vue from 'vue';
 
 export default {
     name: "FiltersWrapper",
@@ -69,7 +71,7 @@ export default {
             type: Boolean,
             required: true,
         },
-        fallbackArray: {
+        fetchedRows: {
             type: Array,
             required: true,
         },
@@ -92,21 +94,38 @@ export default {
                 email: "",
             },
             isSorted: false,
+            filterArray: [],
+            filterCount: 0,
+            // filterStarted: false,
         }
     },
-    computed: {
-        refilter() {
-            // console.log(this.renderedLength < this.requiredLength);
-            return this.renderedLength < this.requiredLength;
-        }
+    created() {
+        // Vue.set(this, 'filterArray', this.arrToFilter);
     },
     mounted() {
-        
+        // console.log('fetchedRows', this.fetchedRows)
+    },
+    computed: {
+        filterArrLength() {
+            return this.fetchedRows.length;
+        }
+    },
+    watch: {
+        async fetchedRows(newValue) {
+            console.log('newValue: ', newValue);
+            this.filterArray = await newValue;
+            // console.log('filterArray: ', this.filterArray.length);
+            // if (this.filterStarted) {
+            //     // this.filterText();
+            // }
+        }
     },
     methods: {
         filterText: _.debounce(function filterText(property) {
+            // this.filterStarted = true;
             // console.log('property: ', property);
             // console.log('email: ', this.filter[property]);
+            this.filterCount++;
             let array = [];
             if (this.isSorted) {
                 if (!this.staticPaging) {
@@ -115,15 +134,20 @@ export default {
                 array = this.sortedList;
                 }
             } else {
-                array = this.fallbackArray;          
+                array = this.filterArray;          
+                // console.log('array.length: ', array.length);
             }
             
             this.filteredList =  array.filter(row => row[property].search(this.filter[property]) > -1);
-            console.log('this.filteredList: ', this.filteredList);
+            // console.log('this.filteredList: ', this.filteredList);
+            // this.$emit('filter', this.filteredList);
             this.$emit('filter', this.filteredList);
         }, 500),
         removeFilter(property) {
-            console.log('property: ', property);
+            // console.log('property: ', property);
+            // this.filterStarted = false;
+            this.filter[property] = "";
+            this.$emit('remove-filter');
         },
     },
 };

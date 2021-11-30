@@ -33,12 +33,13 @@
   </oz-table>
   <FiltersWrapper 
     :static-paging="staticPaging"
-    :fallback-array="fetchedRows"
+    :fetched-rows="fetchedRows"
     :refilter="refilter"
     :requiredLength="requiredRowsLength"
     :renderedRows="renderedRowsLength"
 
     @filter="filterList"
+    @remove-filter="removeFilter"
   />
 </div>
 
@@ -160,6 +161,7 @@ export default {
         this.getPage(this.currentPage);
       } else {
         this.rows = list;
+        // console.log('list: ', list.length);
         console.log('this.rows: ', this.rows);
         // this.rememberCurrentPage();
         // this.getRequiredRowsLength();
@@ -170,7 +172,7 @@ export default {
         // }
 
         if (this.renderedRows < this.requiredRowsLength) {
-          this.refilter = true;
+          // this.refilter = true;
           // console.log('this.refilter: ', this.refilter);
           console.log('less')
         }
@@ -207,14 +209,16 @@ export default {
         this.getPage(this.currentPage);
       }
     },
-    removeFilter(value) {
-      this.sortFilterInfo = value;
-      this.sortList();
+    // removeFilter(value) {
+    removeFilter() {
+      this.rows = this.fetchedRows; 
+      // this.sortFilterInfo = value;
+      // this.sortList();
 
-      if (this.staticPaging) {
-        this.preparePages(this.sortedList);
-        this.getPage(this.currentPage);
-      }
+      // if (this.staticPaging) {
+      //   this.preparePages(this.sortedList);
+      //   this.getPage(this.currentPage);
+      // }
     },
     addSort(value) {
       this.isSorted = true;
@@ -307,6 +311,7 @@ export default {
           this.rows = this.fetchedRows;
         }
         this.currentPage++;
+
         if (this.hasFilter) {
           this.rememberCurrentPage();
           this.getRequiredRowsLength();
@@ -316,15 +321,14 @@ export default {
           console.log('this.renderedRows: ', this.renderedRows);
           console.log('less')
           
-          
           // this.rows = [...this.rows, ...this.newRows];
 
-          this.filterUniqueRows(this.rows);
+          // this.filterUniqueRows(this.rows);
 
-          if (this.uniqueFiltered) {
+          // if (this.uniqueFiltered) {
             // todo - новые страницы догружаются и фильтруются, но старые пропадают
             // await this.infGetPage();
-          }
+          // }
         } else {
           console.log('more or equal')
         }
@@ -339,7 +343,7 @@ export default {
         //     // }
         
         // this.currentPage++;
-        console.log(this.rows);
+        // console.log(this.rows);
         // if (this.sortFilterInfo.filterProp) {     
         //   this.rememberCurrentPage();
         //   this.getRequiredRowsLength();
