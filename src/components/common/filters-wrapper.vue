@@ -10,13 +10,30 @@
                 ID
                 <div class="range">
                     <span>From</span>
-                    <input type="number" name="id_min" class="input number" min="1" max="500">
+                    <input 
+                        type="number" 
+                        name="id_min" 
+                        class="input number" 
+                        min="1" 
+                        max="500"
+                        v-model="filter.id_min"
+                        @input="filterByRange('id_min', false)"
+                    >
                     <span>To</span>
-                    <input type="number" name="id_max" class="input number" min="1" max="500">
+                    <input 
+                        type="number" 
+                        name="id_max" 
+                        class="input number" 
+                        min="1" 
+                        max="500"
+                        v-model="filter.id_max"
+                        @input="filterByNumber('id_max')"
+                    >
                 </div>
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
+                    @click="removeFilter('id_min', 'id_max')"
                 />
             </label>
         </div> 
@@ -102,6 +119,8 @@ export default {
                 postId: undefined,
                 email: "",
                 name: "",
+                id_min: "",
+                id_max: "",
             },
             activeFilterProp: "",
             isSorted: false,
@@ -138,6 +157,28 @@ export default {
         }
     },
     methods: {
+        filterByRange: _.debounce(function filterByNumber(property) {
+            this.textIsFiltered = false;
+            this.numberIsFiltered = true;
+            console.log('in filter by number');
+            this.activeFilterProp = property;
+            // ! при множественной фильтрации изменится array
+            let array = [];
+            if (this.isSorted) {
+                if (!this.staticPaging) {
+                    array = this.fetchedRows;          
+                } else {
+                    array = this.sortedList;
+                }
+            } else {
+                array = this.filterArray;          
+                // console.log('array.length: ', array.length);
+            }
+            this.filteredList =  array.filter(row => row[property] === parseInt(this.filter[property]));
+
+            // console.log('this.filteredList: ', this.filteredList);
+            this.$emit('filter', this.filteredList);
+        }, 500),
         filterByNumber: _.debounce(function filterByNumber(property) {
             this.textIsFiltered = false;
             this.numberIsFiltered = true;
