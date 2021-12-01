@@ -322,7 +322,8 @@ export default {
         if (this.hasFilter) {
           this.rememberCurrentPage();
           this.getRequiredRowsLength();
-          // todo - иногда попадаются дублирующиеся ряды. filter uniquerows убирает первый ряд. М.б дело в прокрутке?
+          // todo - иногда попадаются дублирующиеся ряды. Cкорее, страницы, после сброса фильтра
+          // todo - filter uniquerows убирает первый ряд. М.б дело в прокрутке?
         }
 
         //     // if (this.canBeFiltered) {

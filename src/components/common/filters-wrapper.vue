@@ -23,10 +23,19 @@
         <div class="filters-wrapper__line">
             <label>
                 Post ID
-                <input type="number" name="post_id" class="input number" min="1" max="100">
+                <input 
+                    type="number" 
+                    name="post_id" 
+                    class="input number" 
+                    min="1" 
+                    max="100"
+                    v-model="filter.postId"
+                    @input="filterByNumber('postId')"
+                >
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
+                    @click="removeFilter('postId')"
                 />
             </label>
         </div>
@@ -51,10 +60,18 @@
         <div class="filters-wrapper__line">
             <label>
                 Name
-                <input type="text" name="name" class="input" placeholder="Введите значение">
+                <input 
+                    type="text" 
+                    name="name" 
+                    class="input" 
+                    placeholder="Введите значение"
+                    v-model="filter.name"
+                    @input="filterText('name')"
+                >
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
+                    @click="removeFilter('name')"
                 />
             </label>
         </div>
@@ -62,7 +79,6 @@
 </template>
 <script>
 import _ from 'lodash';
-// import Vue from 'vue';
 
 export default {
     name: "FiltersWrapper",
@@ -83,10 +99,14 @@ export default {
     data() {
         return {
             filter: {
+                postId: undefined,
                 email: "",
+                name: "",
             },
             activeFilterProp: "",
             isSorted: false,
+            textIsFiltered: false,
+            numberIsFiltered: false,
             filterArray: [],
             filterCount: 0,
         }
@@ -108,12 +128,41 @@ export default {
             this.filterArray = await newValue;
             console.log('refilter', this.refilter);
             if (this.refilter) {
-                this.filterText(this.activeFilterProp);
+                if (this.textIsFiltered) {
+                    this.filterText(this.activeFilterProp);
+                }
+                if (this.numberIsFiltered) {
+                    this.filterByNumber(this.activeFilterProp);
+                }
             }
         }
     },
     methods: {
+        filterByNumber: _.debounce(function filterByNumber(property) {
+            this.textIsFiltered = false;
+            this.numberIsFiltered = true;
+            console.log('in filter by number');
+            this.activeFilterProp = property;
+            // ! при множественной фильтрации изменится array
+            let array = [];
+            if (this.isSorted) {
+                if (!this.staticPaging) {
+                    array = this.fetchedRows;          
+                } else {
+                    array = this.sortedList;
+                }
+            } else {
+                array = this.filterArray;          
+                // console.log('array.length: ', array.length);
+            }
+            this.filteredList =  array.filter(row => row[property] === parseInt(this.filter[property]));
+
+            // console.log('this.filteredList: ', this.filteredList);
+            this.$emit('filter', this.filteredList);
+        }, 500),
         filterText: _.debounce(function filterText(property) {
+            this.textIsFiltered = true;
+            this.numberIsFiltered = false;
             console.log('in filter')
             this.activeFilterProp = property;
             // console.log('property: ', property);
@@ -137,7 +186,13 @@ export default {
         }, 500),
         removeFilter(property) {
             // console.log('property: ', property);
-            this.filter[property] = "";
+            if (typeof this.filter[property] === 'string') {
+                this.filter[property] = "";
+            } else {
+                // todo - возможно, потом типы изменятся
+                 this.filter[property] = undefined;
+            }
+            
             this.$emit('remove-filter');
         },
     },
