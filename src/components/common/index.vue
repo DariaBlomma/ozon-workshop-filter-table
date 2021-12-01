@@ -35,8 +35,6 @@
     :static-paging="staticPaging"
     :fetched-rows="fetchedRows"
     :refilter="refilter"
-    :requiredLength="requiredRowsLength"
-    :renderedRows="renderedRowsLength"
 
     @filter="filterList"
     @remove-filter="removeFilter"
@@ -76,7 +74,7 @@ export default {
       newRows: [],
       afterNewRows: [],
       renderedRows: 0,
-      // renderedRowsLength: 0,
+      renderedRowsLength: 0,
       allPages: [],
       list: [],
       currentPage: 1,
@@ -99,22 +97,16 @@ export default {
       nextPageFetchedCount: 0,
       hasFilter: false,
       hasSort: false,
-      refilter: false,
-      mounted: false,
     };
   },
   computed: {
     getTotalPages() {
       return this.list.length;
     },
-    renderedRowsLength() {
-     return this.mounted 
-      ? this.$children[0].$refs.tbody.children.length
-      : 0;
+    // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
+    refilter() {
+      return !!this.newRows.length && this.hasFilter &&  (this.rows.length < this.requiredRowsLength);
     },
-  },
-  mounted() {
-    this.mounted = true;
   },
   methods: {
     async fetchAllPages() {
@@ -171,22 +163,17 @@ export default {
         this.getPage(this.currentPage);
       } else {
         this.rows = list;
-        // console.log('list: ', list.length);
-        console.log('this.rows: ', this.rows);
-        // this.rememberCurrentPage();
-        // this.getRequiredRowsLength();
-
-        // if (this.renderedRows >= this.requiredRowsLength) {
-        //   this.refilter = false;
-        //   console.log('more or equal')
-        // }
-
-        if (this.renderedRows < this.requiredRowsLength) {
-          // this.refilter = true;
-          // console.log('this.refilter: ', this.refilter);
-          console.log('less')
+        console.log('in filter this.rows: ', this.rows);
         }
-      }
+
+        // if (this.renderedRows < this.requiredRowsLength) {
+        if (this.refilter) {
+          console.log('less')
+          this.fetchForFilter();
+        } else {
+          this.rememberLengthCount = 0;
+          this.rememberCurrentPage(true);
+        }
     },
     // async filterList() {
     //   let array = [];
@@ -221,6 +208,7 @@ export default {
     },
     // removeFilter(value) {
     removeFilter() {
+      this.hasFilter = false;
       this.rows = this.fetchedRows; 
       // this.sortFilterInfo = value;
       // this.sortList();
@@ -275,6 +263,7 @@ export default {
     // * это нужно для правильного подсчета требуемых рядов на странице. 
     // * Они зависят не от currentPage, то есть нужного id поста, а от разбиения по 5штук на страницу уже отфильтрованных данных
     // * Получается, после набора требуемого размера рядов, в следующий вызов прибавится 5
+    // ! после уравнения отфильтрованного списка нужно передать true в параметр, чтобы обновить номер запомненной страницы
     rememberCurrentPage(updatePageNumber = false) {
       this.rememberedCurrentPage++;
       if (this.rememberedCurrentPage === 1) {
@@ -285,6 +274,7 @@ export default {
       }
       return this.rememberedPageNumber;
     },
+    // ! после уравнения отфильтрованного списка нужно обнулить rememberLengthCount, чтобы пересчитать requiredLength
     getRequiredRowsLength() {
       this.rememberLengthCount++;
       
@@ -303,48 +293,26 @@ export default {
       });
       this.uniqueFiltered = true;
     },
+    // * вызывается, когда после фильтрации недостаточно рядов
     async fetchForFilter() {
-          this.rememberCurrentPage();
-          this.getRequiredRowsLength();
-
-          if (this.renderedRows < this.requiredRowsLength) {
-            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
-            console.log('this.renderedRows: ', this.renderedRows);
-            console.log('less')
-            this.refilter = true;
-            await this.fetchNextPage() && this.newRowsFetched;
-            this.fetchedRows = [...this.fetchedRows, ...this.newRows];
-            this.currentPage++;
-            this.fetchForFilter();
-            // await this.fetchNextPage() && this.newRowsFetched;
-            // this.fetchedRows = [...this.fetchedRows, ...this.newRows];
-            // this.currentPage++;
-            // this.rows = [...this.rows, ...this.newRows];
-
-            // this.filterUniqueRows(this.rows);
-
-            // if (this.uniqueFiltered) {
-              // todo - новые страницы догружаются и фильтруются, но старые пропадают
-              // await this.infGetPage();
-            // }
-          } else {
-            console.log('more or equal')
-            this.refilter = false;
-          }
+      await this.fetchNextPage() && this.newRowsFetched;
+      this.fetchedRows = [...this.fetchedRows, ...this.newRows];
+      this.currentPage++;
     },
     async infGetPage() {
+      console.log('in inf pager');
       this.blockingPromise && await this.blockingPromise;
+
+// * при текущей реализации не нужны, пока оставлю про запас
+      // this.renderedRows = this.$children[0].$refs.tbody.children.length;
+      // this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
 
       await this.fetchNextPage() && this.newRowsFetched;
       
-      this.renderedRows = this.$children[0].$refs.tbody.children.length;
-      // this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
+
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
 
-        // if (!this.sortFilterInfo.filterProp && !this.sortFilterInfo.sortProp) {
-        //   this.rows = this.fetchedRows;
-        // }
         // * проверка на отсутствие фильтров и сортировки нужна, чтобы отфильтрованные ряды были в приоритете, а не сбрасывались здесь на fetchedRows
         if (!this.hasFilter && !this.hasSort) {
           this.rows = this.fetchedRows;
@@ -352,33 +320,9 @@ export default {
         this.currentPage++;
 
         if (this.hasFilter) {
-          // await this.fetchForFilter();
           this.rememberCurrentPage();
           this.getRequiredRowsLength();
-
-          if (this.renderedRowsLength < this.requiredRowsLength) {
-          // while (this.renderedRows < this.requiredRowsLength) {
-            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
-            console.log('this.renderedRows: ', this.renderedRowsLength);
-            console.log('less')
-            this.refilter = true;
-            // this.fetchForFilter();
-            await this.fetchNextPage() && this.newRowsFetched;
-            this.fetchedRows = [...this.fetchedRows, ...this.newRows];
-            this.currentPage++;
-          // }
-            // this.rows = [...this.rows, ...this.newRows];
-
-            // this.filterUniqueRows(this.rows);
-
-            // if (this.uniqueFiltered) {
-              // todo - новые страницы догружаются и фильтруются, но старые пропадают
-              // await this.infGetPage();
-            // }
-          } else {
-            console.log('more or equal')
-            this.refilter = false;
-          }
+          // todo - иногда попадаются дублирующиеся ряды. filter uniquerows убирает первый ряд. М.б дело в прокрутке?
         }
 
         //     // if (this.canBeFiltered) {
@@ -390,8 +334,7 @@ export default {
         //     // if (this.uniqueFiltered) {
             //   await this.infGetPage();
         //     // }
-        
-        // this.currentPage++;
+  
         // console.log(this.rows);
         // if (this.sortFilterInfo.filterProp) {     
         //   this.rememberCurrentPage();
@@ -436,10 +379,6 @@ export default {
 
       } else {
         this.emptyMessage = 'There are no more pages left';
-
-        if (this.renderedRows < this.rows.length) {
-          await this.infGetPage();
-        }
 
         return;
       }

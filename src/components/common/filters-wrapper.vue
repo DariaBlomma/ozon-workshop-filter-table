@@ -79,14 +79,6 @@ export default {
             type: Boolean,
             required: true,
         },
-        requiredLength: {
-            type: Number,
-            default: 0,
-        },
-        renderedLength: {
-            type: Number,
-            default: 0,
-        }
     },
     data() {
         return {
@@ -97,7 +89,6 @@ export default {
             isSorted: false,
             filterArray: [],
             filterCount: 0,
-            // filterStarted: false,
         }
     },
     created() {
@@ -116,7 +107,6 @@ export default {
             console.log('newValue: ', newValue);
             this.filterArray = await newValue;
             console.log('refilter', this.refilter);
-            // console.log('filterArray: ', this.filterArray.length);
             if (this.refilter) {
                 this.filterText(this.activeFilterProp);
             }
@@ -126,7 +116,6 @@ export default {
         filterText: _.debounce(function filterText(property) {
             console.log('in filter')
             this.activeFilterProp = property;
-            // this.filterStarted = true;
             // console.log('property: ', property);
             // console.log('email: ', this.filter[property]);
             this.filterCount++;
@@ -144,12 +133,10 @@ export default {
             
             this.filteredList =  array.filter(row => row[property].search(this.filter[property]) > -1);
             // console.log('this.filteredList: ', this.filteredList);
-            // this.$emit('filter', this.filteredList);
             this.$emit('filter', this.filteredList);
         }, 500),
         removeFilter(property) {
             // console.log('property: ', property);
-            // this.filterStarted = false;
             this.filter[property] = "";
             this.$emit('remove-filter');
         },
