@@ -75,10 +75,10 @@ export default {
             type: Array,
             required: true,
         },
-        // refilter: {
-        //     type: Boolean,
-        //     required: true,
-        // },
+        refilter: {
+            type: Boolean,
+            required: true,
+        },
         requiredLength: {
             type: Number,
             default: 0,
@@ -93,6 +93,7 @@ export default {
             filter: {
                 email: "",
             },
+            activeFilterProp: "",
             isSorted: false,
             filterArray: [],
             filterCount: 0,
@@ -114,14 +115,17 @@ export default {
         async fetchedRows(newValue) {
             console.log('newValue: ', newValue);
             this.filterArray = await newValue;
+            console.log('refilter', this.refilter);
             // console.log('filterArray: ', this.filterArray.length);
-            // if (this.filterStarted) {
-            //     // this.filterText();
-            // }
+            if (this.refilter) {
+                this.filterText(this.activeFilterProp);
+            }
         }
     },
     methods: {
         filterText: _.debounce(function filterText(property) {
+            console.log('in filter')
+            this.activeFilterProp = property;
             // this.filterStarted = true;
             // console.log('property: ', property);
             // console.log('email: ', this.filter[property]);

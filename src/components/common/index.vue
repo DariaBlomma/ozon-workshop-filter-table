@@ -76,7 +76,7 @@ export default {
       newRows: [],
       afterNewRows: [],
       renderedRows: 0,
-      renderedRowsLength: 0,
+      // renderedRowsLength: 0,
       allPages: [],
       list: [],
       currentPage: 1,
@@ -100,12 +100,21 @@ export default {
       hasFilter: false,
       hasSort: false,
       refilter: false,
+      mounted: false,
     };
   },
   computed: {
     getTotalPages() {
       return this.list.length;
     },
+    renderedRowsLength() {
+     return this.mounted 
+      ? this.$children[0].$refs.tbody.children.length
+      : 0;
+    },
+  },
+  mounted() {
+    this.mounted = true;
   },
   methods: {
     async fetchAllPages() {
@@ -155,6 +164,7 @@ export default {
       }
     },
     filterList(list) {
+      console.log('in filter list')
       this.hasFilter = true;
       if (this.staticPaging) {
         this.preparePages(list);
@@ -293,13 +303,42 @@ export default {
       });
       this.uniqueFiltered = true;
     },
+    async fetchForFilter() {
+          this.rememberCurrentPage();
+          this.getRequiredRowsLength();
+
+          if (this.renderedRows < this.requiredRowsLength) {
+            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
+            console.log('this.renderedRows: ', this.renderedRows);
+            console.log('less')
+            this.refilter = true;
+            await this.fetchNextPage() && this.newRowsFetched;
+            this.fetchedRows = [...this.fetchedRows, ...this.newRows];
+            this.currentPage++;
+            this.fetchForFilter();
+            // await this.fetchNextPage() && this.newRowsFetched;
+            // this.fetchedRows = [...this.fetchedRows, ...this.newRows];
+            // this.currentPage++;
+            // this.rows = [...this.rows, ...this.newRows];
+
+            // this.filterUniqueRows(this.rows);
+
+            // if (this.uniqueFiltered) {
+              // todo - новые страницы догружаются и фильтруются, но старые пропадают
+              // await this.infGetPage();
+            // }
+          } else {
+            console.log('more or equal')
+            this.refilter = false;
+          }
+    },
     async infGetPage() {
       this.blockingPromise && await this.blockingPromise;
 
       await this.fetchNextPage() && this.newRowsFetched;
       
       this.renderedRows = this.$children[0].$refs.tbody.children.length;
-      this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
+      // this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
 
@@ -313,25 +352,35 @@ export default {
         this.currentPage++;
 
         if (this.hasFilter) {
+          // await this.fetchForFilter();
           this.rememberCurrentPage();
           this.getRequiredRowsLength();
-        }
-        if (this.renderedRows < this.requiredRowsLength) {
-          console.log('this.requiredRowsLength: ', this.requiredRowsLength);
-          console.log('this.renderedRows: ', this.renderedRows);
-          console.log('less')
-          
-          // this.rows = [...this.rows, ...this.newRows];
 
-          // this.filterUniqueRows(this.rows);
-
-          // if (this.uniqueFiltered) {
-            // todo - новые страницы догружаются и фильтруются, но старые пропадают
-            // await this.infGetPage();
+          if (this.renderedRowsLength < this.requiredRowsLength) {
+          // while (this.renderedRows < this.requiredRowsLength) {
+            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
+            console.log('this.renderedRows: ', this.renderedRowsLength);
+            console.log('less')
+            this.refilter = true;
+            // this.fetchForFilter();
+            await this.fetchNextPage() && this.newRowsFetched;
+            this.fetchedRows = [...this.fetchedRows, ...this.newRows];
+            this.currentPage++;
           // }
-        } else {
-          console.log('more or equal')
+            // this.rows = [...this.rows, ...this.newRows];
+
+            // this.filterUniqueRows(this.rows);
+
+            // if (this.uniqueFiltered) {
+              // todo - новые страницы догружаются и фильтруются, но старые пропадают
+              // await this.infGetPage();
+            // }
+          } else {
+            console.log('more or equal')
+            this.refilter = false;
+          }
         }
+
         //     // if (this.canBeFiltered) {
         //     //   this.canBeSorted = false;
         //     // }
@@ -339,7 +388,7 @@ export default {
         //     // this.filterUniqueRows();
 
         //     // if (this.uniqueFiltered) {
-        //     //   await this.infGetPage();
+            //   await this.infGetPage();
         //     // }
         
         // this.currentPage++;
