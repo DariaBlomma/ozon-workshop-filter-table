@@ -144,6 +144,9 @@ export default {
         <div {...{ class: this.$style.infPager, style, directives }} />
       );
     },
+    viewHandler() {
+            console.log('is in view')
+    }
   },
   render(h) {
     const { $style, totalPages, currentPage, staticPaging, emptyMessage, $listeners } = this;
@@ -151,7 +154,7 @@ export default {
     const columnsOptions = this.getColumnOptions();
     const columnsHead = this.renderHead(h, columnsOptions);
     const rows = this.renderRows(h, columnsOptions);
-
+console.log('in render')
     return (
       <div>
         <table class={$style.table}>
@@ -159,6 +162,7 @@ export default {
           <tbody ref="tbody">{...rows}</tbody>
           { emptyMessage || ""}
         </table>
+        <span v-view={this.viewHandler}>After table</span>
         {staticPaging
         
           ? <OzTablePaginator totalPages={totalPages} currentPage={currentPage} on={{ getPage: getPage }} />

@@ -45,10 +45,10 @@
 
 <script>
 import { orderBy } from 'lodash/collection';
-// todo - фильтры должны учитывать тип данные, м.б range, cheeckbox
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
+
 
 export default {
   name: 'Common',
@@ -68,46 +68,52 @@ export default {
   // * для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
   data() {
     return {
-      staticPaging: false,
       rows: [],
       fetchedRows: [],
       beforeFilterFetchedRows: [],
       newRows: [],
       afterNewRows: [],
-      renderedRows: 0,
-      renderedRowsLength: 0,
       allPages: [],
       list: [],
+      sortedList: [],
+      filteredList: [],
+      sortFilterInfo: {},
+      emptyMessage: '',
       currentPage: 1,
       constantCurrentPage: 1,
       pageSize: 5,
-      requiredRowsLength: 5,
+      requiredRowsLength: 0,
+      rememberLengthCount: 0,
+      rememberedCurrentPage: 0,
+      nextPageFetchedCount: 0,
+      prevFetchedPage: 0,
+      renderedRows: 0,
+      renderedRowsLength: 0,
+      staticPaging: false,
+      hasFilter: false,
+      hasSort: false,
+      canBeSorted: true,
+      canBeFiltered: true,
+      uniqueFiltered: false,
       isSorted: false,
       isFiltered: false,
       pageRendered: false,
       newRowsFetched: false,
-      sortedList: [],
-      filteredList: [],
-      sortFilterInfo: {},
-      rememberLengthCount: 0,
-      rememberedCurrentPage: 0,
-      emptyMessage: '',
-      canBeSorted: true,
-      canBeFiltered: true,
-      uniqueFiltered: false,
-      nextPageFetchedCount: 0,
-      hasFilter: false,
-      hasSort: false,
-      prevFetchedPage: 0,
     };
   },
   computed: {
     getTotalPages() {
       return this.list.length;
     },
+    // ! не работает. Консоль выводит false, devtools - true
     // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
     refilter() {
-      return this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength);
+      // console.log('this.hasFilter: ', this.hasFilter);
+      // console.log('!!this.newRows.length: ', !!this.newRows.length);
+      // console.log('(this.rows.length < this.requiredRowsLength: ', (this.rows.length < this.requiredRowsLength));
+      // console.log('this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength): ', this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength));
+      return this.hasFilter && !!this.newRows.length && (this.rows.length < this.requiredRowsLength);
+      
     },
   },
   methods: {
@@ -160,6 +166,7 @@ export default {
     filterList(list) {
       console.log('in filter list')
       this.hasFilter = true;
+      
       if (this.staticPaging) {
         this.preparePages(list);
         this.getPage(this.currentPage);
@@ -167,7 +174,8 @@ export default {
         this.rows = list;
         console.log('in filter this.rows: ', this.rows);
         }
-
+// console.log('this.refilter: ', this.refilter);
+// console.log('this.requiredRowsLength', this.requiredRowsLength);
         // if (this.renderedRows < this.requiredRowsLength) {
         if (this.refilter) {
           console.log('less')
@@ -249,9 +257,11 @@ export default {
     },
     async fetchNextPage() {
       try { 
-        console.log('in fetch next page')
+        // console.log('in fetch next page')
         this.newRowsFetched = false;
         this.prevFetchedPage = this.currentPage;
+        // console.log(' this.prevFetchedPage: ',  this.prevFetchedPage);
+        // console.log('this.currentPage + 1: ', this.currentPage + 1);
         if (this.prevFetchedPage === this.currentPage + 1) {
           console.log('already fetched page')
         }
