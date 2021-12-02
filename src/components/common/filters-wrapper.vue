@@ -16,8 +16,8 @@
                         class="input number" 
                         min="1" 
                         max="500"
-                        v-model="filter.id_min"
-                        @input="filterByRange('id_min', false)"
+                        v-model="filter.id.min"
+                        @input="filterByRange('id')"
                     >
                     <span>To</span>
                     <input 
@@ -26,14 +26,14 @@
                         class="input number" 
                         min="1" 
                         max="500"
-                        v-model="filter.id_max"
-                        @input="filterByNumber('id_max')"
+                        v-model="filter.id.max"
+                        @input="filterByRange('id')"
                     >
                 </div>
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
-                    @click="removeFilter('id_min', 'id_max')"
+                    @click="removeFilter('id', 'range')"
                 />
             </label>
         </div> 
@@ -119,13 +119,16 @@ export default {
                 postId: undefined,
                 email: "",
                 name: "",
-                id_min: "",
-                id_max: "",
+                id: {
+                    min: "",
+                    max: "",
+                },
             },
             activeFilterProp: "",
             isSorted: false,
             textIsFiltered: false,
             numberIsFiltered: false,
+            rangeIsFiltered: false,
             filterArray: [],
             filterCount: 0,
         }
@@ -153,14 +156,19 @@ export default {
                 if (this.numberIsFiltered) {
                     this.filterByNumber(this.activeFilterProp);
                 }
+
+                if (this.rangeIsFiltered) {
+                    this.filterByRange(this.activeFilterProp);
+                }
             }
         }
     },
     methods: {
-        filterByRange: _.debounce(function filterByNumber(property) {
+        filterByRange: _.debounce(function filterByRange(property) {
             this.textIsFiltered = false;
-            this.numberIsFiltered = true;
-            console.log('in filter by number');
+            this.numberIsFiltered = false;
+            this.rangeIsFiltered = true;
+            console.log('in filter by range');
             this.activeFilterProp = property;
             // ! при множественной фильтрации изменится array
             let array = [];
@@ -174,13 +182,34 @@ export default {
                 array = this.filterArray;          
                 // console.log('array.length: ', array.length);
             }
-            this.filteredList =  array.filter(row => row[property] === parseInt(this.filter[property]));
+            if (this.filter[property].min && this.filter[property].max) {
+                this.filteredList =  array.filter(row => {
+                    return row[property] >= parseInt(this.filter[property].min) 
+                    && row[property] <= parseInt(this.filter[property].max);
+                });
+            }
+            
+            if (this.filter[property].min && !this.filter[property].max) {
+                console.log('min')
+                this.filteredList =  array.filter(row => {
+                    console.log('parseInt(this.filter[property].min): ', parseInt(this.filter[property].min));
+                    console.log('row[property]: ', row[property]);
+                    return row[property] >= parseInt(this.filter[property].min);
+                });
+            }
 
-            // console.log('this.filteredList: ', this.filteredList);
+            if (!this.filter[property].min && this.filter[property].max) {
+                this.filteredList =  array.filter(row => {
+                    return row[property] <= parseInt(this.filter[property].max);
+                });
+            }
+
+            console.log('this.filteredList: ', this.filteredList);
             this.$emit('filter', this.filteredList);
         }, 500),
         filterByNumber: _.debounce(function filterByNumber(property) {
             this.textIsFiltered = false;
+            this.rangeIsFiltered = false;
             this.numberIsFiltered = true;
             console.log('in filter by number');
             this.activeFilterProp = property;
@@ -203,6 +232,7 @@ export default {
         }, 500),
         filterText: _.debounce(function filterText(property) {
             this.textIsFiltered = true;
+            this.rangeIsFiltered = false;
             this.numberIsFiltered = false;
             console.log('in filter')
             this.activeFilterProp = property;
@@ -225,13 +255,18 @@ export default {
             // console.log('this.filteredList: ', this.filteredList);
             this.$emit('filter', this.filteredList);
         }, 500),
-        removeFilter(property) {
+        removeFilter(property, type = "") {
             // console.log('property: ', property);
+            if (type === "range") {
+                this.filter[property].min = "";
+                this.filter[property].max = "";
+            }
             if (typeof this.filter[property] === 'string') {
                 this.filter[property] = "";
-            } else {
+            } 
+            if (typeof this.filter[property] === undefined)  {
                 // todo - возможно, потом типы изменятся
-                 this.filter[property] = undefined;
+                this.filter[property] = undefined;
             }
             
             this.$emit('remove-filter');
