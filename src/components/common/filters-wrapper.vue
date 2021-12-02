@@ -131,25 +131,16 @@ export default {
             rangeIsFiltered: false,
             filterArray: [],
             filterCount: 0,
-        }
-    },
-    created() {
-        // Vue.set(this, 'filterArray', this.arrToFilter);
-    },
-    mounted() {
-        // console.log('fetchedRows', this.fetchedRows)
-    },
-    computed: {
-        filterArrLength() {
-            return this.fetchedRows.length;
+            // * нужно для динамического обновления значения пропса
+            refiltered: this.refilter,
         }
     },
     watch: {
         async fetchedRows(newValue) {
-            console.log('newValue: ', newValue);
+            // console.log('newValue: ', newValue);
             this.filterArray = await newValue;
-            console.log('refilter', this.refilter);
-            if (this.refilter) {
+            // console.log('this.refiltered', this.refiltered)
+            if (this.refiltered) {
                 if (this.textIsFiltered) {
                     this.filterText(this.activeFilterProp);
                 }
@@ -190,10 +181,7 @@ export default {
             }
             
             if (this.filter[property].min && !this.filter[property].max) {
-                console.log('min')
                 this.filteredList =  array.filter(row => {
-                    console.log('parseInt(this.filter[property].min): ', parseInt(this.filter[property].min));
-                    console.log('row[property]: ', row[property]);
                     return row[property] >= parseInt(this.filter[property].min);
                 });
             }

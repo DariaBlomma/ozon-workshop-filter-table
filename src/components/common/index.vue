@@ -71,6 +71,7 @@ export default {
       staticPaging: false,
       rows: [],
       fetchedRows: [],
+      beforeFilterFetchedRows: [],
       newRows: [],
       afterNewRows: [],
       renderedRows: 0,
@@ -97,6 +98,7 @@ export default {
       nextPageFetchedCount: 0,
       hasFilter: false,
       hasSort: false,
+      prevFetchedPage: 0,
     };
   },
   computed: {
@@ -105,7 +107,7 @@ export default {
     },
     // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
     refilter() {
-      return !!this.newRows.length && this.hasFilter &&  (this.rows.length < this.requiredRowsLength);
+      return this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength);
     },
   },
   methods: {
@@ -208,8 +210,11 @@ export default {
     },
     // removeFilter(value) {
     removeFilter() {
+      console.log('in removeFilter')
       this.hasFilter = false;
-      this.rows = this.fetchedRows; 
+      console.log('hasFilter: ', this.hasFilter);
+      // * при сбросе возвращаемся на ту страницу, откуда началась фильтрация
+      this.rows = this.beforeFilterFetchedRows || this.fetchedRows; 
       // this.sortFilterInfo = value;
       // this.sortList();
 
@@ -244,7 +249,12 @@ export default {
     },
     async fetchNextPage() {
       try { 
+        console.log('in fetch next page')
         this.newRowsFetched = false;
+        this.prevFetchedPage = this.currentPage;
+        if (this.prevFetchedPage === this.currentPage + 1) {
+          console.log('already fetched page')
+        }
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 1}`);
         this.newRows = await res.json();
         this.nextPageFetchedCount++;
@@ -280,6 +290,8 @@ export default {
       
       if (this.rememberLengthCount === 1) {
         this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
+        this.beforeFilterFetchedRows = this.fetchedRows;
+        console.log('this.beforeFilterFetchedRows: ', this.beforeFilterFetchedRows);
       }
       return this.requiredRowsLength;
     },
