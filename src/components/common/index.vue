@@ -34,10 +34,13 @@
   <FiltersWrapper 
     :static-paging="staticPaging"
     :fetched-rows="fetchedRows"
-    :refilter="refilter"
+    :new-rows-length="newRowsLength"
+    :current-page="currentPage"
+    :page-size="pageSize"
 
     @filter="filterList"
     @remove-filter="removeFilter"
+    @fetch-for-filter="fetchForFilter"
   />
 </div>
 
@@ -45,7 +48,6 @@
 
 <script>
 import { orderBy } from 'lodash/collection';
-// todo - фильтры должны учитывать тип данные, м.б range, cheeckbox
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -68,33 +70,33 @@ export default {
   // * для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
   data() {
     return {
-      staticPaging: false,
       rows: [],
       fetchedRows: [],
       newRows: [],
       afterNewRows: [],
-      renderedRows: 0,
-      renderedRowsLength: 0,
       allPages: [],
       list: [],
+      sortedList: [],
+      filteredList: [],
+      sortFilterInfo: {},
       currentPage: 1,
       constantCurrentPage: 1,
       pageSize: 5,
       requiredRowsLength: 5,
+      rememberLengthCount: 0,
+      rememberedCurrentPage: 0,
+      nextPageFetchedCount: 0,
+      renderedRows: 0,
+      renderedRowsLength: 0,
+      emptyMessage: '',
+      staticPaging: false,
       isSorted: false,
       isFiltered: false,
       pageRendered: false,
       newRowsFetched: false,
-      sortedList: [],
-      filteredList: [],
-      sortFilterInfo: {},
-      rememberLengthCount: 0,
-      rememberedCurrentPage: 0,
-      emptyMessage: '',
       canBeSorted: true,
       canBeFiltered: true,
       uniqueFiltered: false,
-      nextPageFetchedCount: 0,
       hasFilter: false,
       hasSort: false,
     };
@@ -103,10 +105,10 @@ export default {
     getTotalPages() {
       return this.list.length;
     },
-    // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
-    refilter() {
-      return !!this.newRows.length && this.hasFilter &&  (this.rows.length < this.requiredRowsLength);
-    },
+    // * передается пропсом в фильтр для определения refilter
+    newRowsLength() {
+      return !!this.newRows.length;
+    }
   },
   methods: {
     async fetchAllPages() {
@@ -165,15 +167,6 @@ export default {
         this.rows = list;
         console.log('in filter this.rows: ', this.rows);
         }
-
-        // if (this.renderedRows < this.requiredRowsLength) {
-        if (this.refilter) {
-          console.log('less')
-          this.fetchForFilter();
-        } else {
-          this.rememberLengthCount = 0;
-          this.rememberCurrentPage(true);
-        }
     },
     // async filterList() {
     //   let array = [];
@@ -208,10 +201,9 @@ export default {
     },
     // removeFilter(value) {
     removeFilter() {
-      this.hasFilter = false;
+      this.hasFilter = false; 
       this.rows = this.fetchedRows; 
       console.log('in removeFilter');
-      console.log('refilter', this.refilter)
       // this.sortFilterInfo = value;
       // this.sortList();
 
@@ -261,30 +253,6 @@ export default {
         console.warn('Could not fetch next page', e);
       }
     },
-    // * при самом первом вызове запоминаем номер страницы. После is equal увеличивает номер страницы на 1.
-    // * это нужно для правильного подсчета требуемых рядов на странице. 
-    // * Они зависят не от currentPage, то есть нужного id поста, а от разбиения по 5штук на страницу уже отфильтрованных данных
-    // * Получается, после набора требуемого размера рядов, в следующий вызов прибавится 5
-    // ! после уравнения отфильтрованного списка нужно передать true в параметр, чтобы обновить номер запомненной страницы
-    rememberCurrentPage(updatePageNumber = false) {
-      this.rememberedCurrentPage++;
-      if (this.rememberedCurrentPage === 1) {
-        this.rememberedPageNumber = this.currentPage;
-      }
-      if (updatePageNumber) {
-        this.rememberedPageNumber++;
-      }
-      return this.rememberedPageNumber;
-    },
-    // ! после уравнения отфильтрованного списка нужно обнулить rememberLengthCount, чтобы пересчитать requiredLength
-    getRequiredRowsLength() {
-      this.rememberLengthCount++;
-      
-      if (this.rememberLengthCount === 1) {
-        this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
-      }
-      return this.requiredRowsLength;
-    },
     filterUniqueRows(array) {
        // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
       this.uniqueFiltered = false;
@@ -311,7 +279,6 @@ export default {
 
       await this.fetchNextPage() && this.newRowsFetched;
       
-
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
 
@@ -320,14 +287,6 @@ export default {
           this.rows = this.fetchedRows;
         }
         this.currentPage++;
-
-        if (this.hasFilter) {
-          this.rememberCurrentPage();
-          this.getRequiredRowsLength();
-          // todo - иногда попадаются дублирующиеся ряды. Cкорее, страницы, после сброса фильтра
-          // todo - filter uniquerows убирает первый ряд. М.б дело в прокрутке?
-        }
-
         //     // if (this.canBeFiltered) {
         //     //   this.canBeSorted = false;
         //     // }
