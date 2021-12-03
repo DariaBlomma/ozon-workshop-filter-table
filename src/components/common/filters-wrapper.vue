@@ -158,8 +158,7 @@ export default {
     },
     watch: {
         async fetchedRows(newValue) { 
-            console.log('newValue: ', newValue);
-            // console.log('last elem' , newValue[newValue.length - 1].id)
+            // console.log('newValue: ', newValue);
             this.filterArray = await newValue;
             console.log('refilter', this.refilter);
             if (this.hasFilter) {
@@ -184,7 +183,7 @@ export default {
                     this.rememberCurrentPage(true)
                 }
             } else {
-                // todo - не работает с range, number
+                // todo - не работает с range
                 this.removeFilter(this.activeFilterProp)
             }
         }
@@ -233,6 +232,7 @@ export default {
                 array = this.filterArray;          
                 // console.log('array.length: ', array.length);
             }
+
             if (this.filter[property].min && this.filter[property].max) {
                 this.filteredList =  array.filter(row => {
                     return row[property] >= parseInt(this.filter[property].min) 
@@ -252,6 +252,11 @@ export default {
                 });
             }
 
+            // * так работает сброс
+            if (!this.filter[property].min && !this.filter[property].max) {
+                console.log('will return')
+                return this.filteredList;
+            }
             console.log('this.filteredList: ', this.filteredList);
             if (this.refilter) {
                 this.$emit('fetch-for-filter')
@@ -323,6 +328,7 @@ export default {
             this.hasFilter = false;
             // console.log('property: ', typeof this.filter[property]);
             if (typeof this.filter[property] === 'object') {
+                console.log('this.filter[property]: ', this.filter[property]);
                 this.filter[property].min = "";
                 this.filter[property].max = "";
             }
