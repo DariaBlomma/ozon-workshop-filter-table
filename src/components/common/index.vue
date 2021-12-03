@@ -210,6 +210,8 @@ export default {
     removeFilter() {
       this.hasFilter = false;
       this.rows = this.fetchedRows; 
+      console.log('in removeFilter');
+      console.log('refilter', this.refilter)
       // this.sortFilterInfo = value;
       // this.sortList();
 

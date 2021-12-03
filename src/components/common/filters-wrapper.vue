@@ -33,7 +33,7 @@
                 <font-awesome-icon
                     icon="times"
                     class=closeIcon
-                    @click="removeFilter('id', 'range')"
+                    @click="removeFilter('id')"
                 />
             </label>
         </div> 
@@ -116,7 +116,7 @@ export default {
     data() {
         return {
             filter: {
-                postId: undefined,
+                postId: "",
                 email: "",
                 name: "",
                 id: {
@@ -131,17 +131,6 @@ export default {
             rangeIsFiltered: false,
             filterArray: [],
             filterCount: 0,
-        }
-    },
-    created() {
-        // Vue.set(this, 'filterArray', this.arrToFilter);
-    },
-    mounted() {
-        // console.log('fetchedRows', this.fetchedRows)
-    },
-    computed: {
-        filterArrLength() {
-            return this.fetchedRows.length;
         }
     },
     watch: {
@@ -160,6 +149,8 @@ export default {
                 if (this.rangeIsFiltered) {
                     this.filterByRange(this.activeFilterProp);
                 }
+            } else {
+                this.removeFilter(this.activeFilterProp)
             }
         }
     },
@@ -255,18 +246,14 @@ export default {
             // console.log('this.filteredList: ', this.filteredList);
             this.$emit('filter', this.filteredList);
         }, 500),
-        removeFilter(property, type = "") {
-            // console.log('property: ', property);
-            if (type === "range") {
+        removeFilter(property) {
+            // console.log('property: ', typeof this.filter[property]);
+            if (typeof this.filter[property] === 'object') {
                 this.filter[property].min = "";
                 this.filter[property].max = "";
             }
             if (typeof this.filter[property] === 'string') {
                 this.filter[property] = "";
-            } 
-            if (typeof this.filter[property] === undefined)  {
-                // todo - возможно, потом типы изменятся
-                this.filter[property] = undefined;
             }
             
             this.$emit('remove-filter');
