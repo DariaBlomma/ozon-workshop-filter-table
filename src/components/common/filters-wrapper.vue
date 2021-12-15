@@ -154,12 +154,8 @@ export default {
     },
     watch: {
         async fetchedRows(newValue) { 
-            // console.log('newValue: ', newValue);
             this.filterArray = await newValue;
-            console.log('refilter', this.refilter);
             if (this.hasFilter) {
-                // todo - иногда попадаются дублирующиеся ряды. Cкорее, страницы, после сброса фильтра
-                // todo - filter uniquerows убирает первый ряд. М.б дело в прокрутке?
                 this.rememberCurrentPage();
                 this.getRequiredRowsLength();
 
@@ -179,7 +175,6 @@ export default {
                     this.rememberCurrentPage(true)
                 }
             } else {
-                // todo - не работает с range
                 this.removeFilter(this.activeFilterProp)
             }
         }
@@ -207,7 +202,7 @@ export default {
             if (this.rememberLengthCount === 1) {
                 this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
             }
-            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
+            // console.log('this.requiredRowsLength: ', this.requiredRowsLength);
             return this.requiredRowsLength;
         },
         filterByRange: _.debounce(function filterByRange(property) {

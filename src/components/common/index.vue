@@ -78,6 +78,7 @@ export default {
       list: [],
       sortedList: [],
       filteredList: [],
+      neighbourPages: [],
       sortFilterInfo: {},
       currentPage: 1,
       constantCurrentPage: 1,
@@ -165,7 +166,7 @@ export default {
         this.getPage(this.currentPage);
       } else {
         this.rows = list;
-        console.log('in filter this.rows: ', this.rows);
+        // console.log('in filter this.rows: ', this.rows);
         }
     },
     // async filterList() {
@@ -242,6 +243,7 @@ export default {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 1}`);
         this.newRows = await res.json();
         this.nextPageFetchedCount++;
+
         // * если на экране помещается чуть больше 10 рядов при первой загрузке, следующая партия не грузится. Поэтому получаем сразу 2 страницы
         if (this.nextPageFetchedCount === 1) {
           const page2 = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 2}`);
@@ -253,31 +255,26 @@ export default {
         console.warn('Could not fetch next page', e);
       }
     },
-    filterUniqueRows(array) {
-       // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-      this.uniqueFiltered = false;
-      this.rows = array.filter((value, index, array) => {
-        if (array[index - 1]) {
-          return array[index - 1].id !== value.id;
-        }
-      });
-      this.uniqueFiltered = true;
-    },
-    // * вызывается, когда после фильтрации недостаточно рядов
-    async fetchForFilter() {
-      await this.fetchNextPage() && this.newRowsFetched;
-      this.fetchedRows = [...this.fetchedRows, ...this.newRows];
-      this.currentPage++;
-    },
+    // * также вызывается, когда после фильтрации недостаточно рядов
     async infGetPage() {
       // console.log('in inf pager');
       this.blockingPromise && await this.blockingPromise;
+    
+      // * проверка, что не получаем 2 раза ту же страницу (происходит при сбросе фильтра по несуществующим данным)
+      if (this.neighbourPages.length === 2) {
+        this.neighbourPages.shift();
+      }
 
-// * при текущей реализации не нужны, пока оставлю про запас
-      // this.renderedRows = this.$children[0].$refs.tbody.children.length;
-      // this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
+      if (this.neighbourPages.length < 2) {
+        this.neighbourPages.push(this.currentPage + 1);
+      }
 
-      await this.fetchNextPage() && this.newRowsFetched;
+      if (this.neighbourPages.length && this.neighbourPages[0] !== this.neighbourPages[1]) {
+        await this.fetchNextPage() && this.newRowsFetched;
+      } else {
+        return;
+      }
+      
       
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
@@ -341,10 +338,8 @@ export default {
 
       } else {
         this.emptyMessage = 'There are no more pages left';
-
         return;
       }
-
     }
   },
 };
