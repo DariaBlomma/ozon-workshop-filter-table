@@ -40,7 +40,7 @@
 
     @filter="filterList"
     @remove-filter="removeFilter"
-    @fetch-for-filter="fetchForFilter"
+    @fetch-for-filter="infGetPage"
   />
 </div>
 
@@ -158,7 +158,7 @@ export default {
       }
     },
     filterList(list) {
-      console.log('in filter list')
+      // console.log('in filter list')
       this.hasFilter = true;
       if (this.staticPaging) {
         this.preparePages(list);
@@ -203,7 +203,7 @@ export default {
     removeFilter() {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
-      console.log('in removeFilter');
+      // console.log('in removeFilter');
       // this.sortFilterInfo = value;
       // this.sortList();
 
@@ -270,7 +270,7 @@ export default {
       this.currentPage++;
     },
     async infGetPage() {
-      console.log('in inf pager');
+      // console.log('in inf pager');
       this.blockingPromise && await this.blockingPromise;
 
 // * при текущей реализации не нужны, пока оставлю про запас

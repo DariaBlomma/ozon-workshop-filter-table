@@ -134,6 +134,7 @@ export default {
             },
             activeFilterProp: "",
             filterArray: [],
+            filteredList: [],
             requiredRowsLength: 5,
             rememberLengthCount: 0,
             rememberedCurrentPage: 0,
@@ -145,16 +146,11 @@ export default {
             hasFilter: false,
         }
     },
-    // todo - сброс refilter для range работает с большой задержкой. Сначала сбрасывается, а потом опять начинается
     computed: {
         // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
         refilter() {
-            // console.log('this.currentPage: ', this.currentPage);
-            // // console.log('this.filterArray.length < this.requiredRowsLength: ', this.filterArray.length < this.requiredRowsLength);
-            // console.log('this.filteredList.length: ', this.filteredList?.length);
-            // console.log('this.requiredRowsLength: ', this.requiredRowsLength);
             return this.newRowsLength && this.hasFilter &&  (this.filteredList?.length < this.requiredRowsLength);
-        }
+        },
     },
     watch: {
         async fetchedRows(newValue) { 
@@ -211,6 +207,7 @@ export default {
             if (this.rememberLengthCount === 1) {
                 this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
             }
+            console.log('this.requiredRowsLength: ', this.requiredRowsLength);
             return this.requiredRowsLength;
         },
         filterByRange: _.debounce(function filterByRange(property) {
@@ -324,11 +321,10 @@ export default {
 
         }, 500),
         removeFilter(property) {
-            // this.refiltered = false;
             this.hasFilter = false;
-            // console.log('property: ', typeof this.filter[property]);
+
             if (typeof this.filter[property] === 'object') {
-                console.log('this.filter[property]: ', this.filter[property]);
+                // console.log('this.filter[property]: ', this.filter[property]);
                 this.filter[property].min = "";
                 this.filter[property].max = "";
             }
