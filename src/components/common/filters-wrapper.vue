@@ -219,7 +219,6 @@ export default {
             if (this.rememberLengthCount === 1) {
                 this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
             }
-            // console.log('this.requiredRowsLength: ', this.requiredRowsLength);
             return this.requiredRowsLength;
         },
         filterByRange: _.debounce(function filterByRange(property) {
@@ -311,6 +310,7 @@ export default {
             // console.log('email: ', this.filter[property]);
             // this.filterCount++;
             let array = [];
+            // todo сделать event bus, чтобы передать информацию о сортировке из самой таблицы
             if (this.isSorted) {
                 if (!this.staticPaging) {
                 array = this.fetchedRows;          

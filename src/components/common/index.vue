@@ -152,9 +152,12 @@ export default {
       }
       
       this.sortedList =  orderBy(array, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
+      // this.sortedList =  orderBy(this.rows, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
+      console.log('this.sortedList: ', this.sortedList);
 
       if (!this.staticPaging) {
         this.rows = this.sortedList;
+        console.log('this.rows in add sort: ', this.rows);
         this.canBeFiltered = true;
       }
     },
@@ -273,8 +276,7 @@ export default {
         await this.fetchNextPage() && this.newRowsFetched;
       } else {
         return;
-      }
-      
+      }    
       
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
@@ -318,11 +320,12 @@ export default {
         //     this.rememberCurrentPage(true);
         //     this.canBeSorted = true;
             
-        //     if (this.sortInfo.sortProp) {
-        //       if (this.canBeSorted) {
-        //         this.sortList();
-        //       }
-        //     }
+            if (this.sortInfo.sortProp) {
+              // if (this.canBeSorted) {
+                this.sortList();
+                // console.log('this.rows in inf pager: ', this.rows);
+              // }
+            }
         //   }
         // }
 
