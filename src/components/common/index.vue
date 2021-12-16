@@ -79,7 +79,7 @@ export default {
       sortedList: [],
       filteredList: [],
       neighbourPages: [],
-      sortFilterInfo: {},
+      sortInfo: {},
       currentPage: 1,
       constantCurrentPage: 1,
       pageSize: 5,
@@ -151,7 +151,7 @@ export default {
           }
       }
       
-      this.sortedList =  orderBy(array, [this.sortFilterInfo.sortProp], [this.sortFilterInfo.sortDirection]);
+      this.sortedList =  orderBy(array, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
 
       if (!this.staticPaging) {
         this.rows = this.sortedList;
@@ -185,14 +185,14 @@ export default {
     //     }
     //   }
       
-    //   this.filteredList =  array.filter(row => row[this.sortFilterInfo.filterProp].search(this.sortFilterInfo.filterText) > -1);
+    //   this.filteredList =  array.filter(row => row[this.sortInfo.filterProp].search(this.sortInfo.filterText) > -1);
     //   if (!this.staticPaging) {
     //     this.rows = this.filteredList;
     //   }
     // },
     addFilter(value) {  
       this.isFiltered = true;
-      this.sortFilterInfo = value;
+      this.sortInfo = value;
       this.filterList();
       
       if (this.staticPaging) {
@@ -205,7 +205,7 @@ export default {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
       // console.log('in removeFilter');
-      // this.sortFilterInfo = value;
+      // this.sortInfo = value;
       // this.sortList();
 
       // if (this.staticPaging) {
@@ -215,7 +215,7 @@ export default {
     },
     addSort(value) {
       this.isSorted = true;
-      this.sortFilterInfo = value;
+      this.sortInfo = value;
       this.sortList();
 
       if (this.staticPaging) {
@@ -295,7 +295,7 @@ export default {
         //     // }
   
         // console.log(this.rows);
-        // if (this.sortFilterInfo.filterProp) {     
+        // if (this.sortInfo.filterProp) {     
         //   this.rememberCurrentPage();
         //   this.getRequiredRowsLength();
         //   // повторный вызов нужен для фильтрации по новополученным полям
@@ -318,7 +318,7 @@ export default {
         //     this.rememberCurrentPage(true);
         //     this.canBeSorted = true;
             
-        //     if (this.sortFilterInfo.sortProp) {
+        //     if (this.sortInfo.sortProp) {
         //       if (this.canBeSorted) {
         //         this.sortList();
         //       }
@@ -326,8 +326,8 @@ export default {
         //   }
         // }
 
-        // if (this.sortFilterInfo.sortProp) {
-        //   if (!this.sortFilterInfo.filterProp) {
+        // if (this.sortInfo.sortProp) {
+        //   if (!this.sortInfo.filterProp) {
         //     // убираем дубликаты после удаления фильтра
         //     this.filterUniqueRows();
         //     if (this.uniqueFiltered) {

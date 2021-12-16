@@ -1,98 +1,108 @@
 <template>
-    <div class="filters-wrapper">
-        <font-awesome-icon
-            icon="times"
-            class=closeIcon
-        />
-        <h1>Filters</h1>  
-        <div class="filters-wrapper__line">
-            <label class="range-label">
-                ID
-                <div class="range">
-                    <span>From</span>
+    <div>
+        <button 
+            class="btn open-filter" 
+            @click="openFilter"
+        >
+            Filter
+        </button>
+        <div class="filters-wrapper" v-if="showFiltersWrapper">
+            <font-awesome-icon
+                icon="times"
+                class=closeIcon
+                @click="closeFilter"
+            />
+            <h1>Filters</h1>  
+            <div class="filters-wrapper__line">
+                <label class="range-label">
+                    ID
+                    <div class="range">
+                        <span>From</span>
+                        <input 
+                            type="number" 
+                            name="id_min" 
+                            class="input number" 
+                            min="1" 
+                            max="500"
+                            v-model="filter.id.min"
+                            @input="filterByRange('id')"
+                        >
+                        <span>To</span>
+                        <input 
+                            type="number" 
+                            name="id_max" 
+                            class="input number" 
+                            min="1" 
+                            max="500"
+                            v-model="filter.id.max"
+                            @input="filterByRange('id')"
+                        >
+                    </div>
+                    <font-awesome-icon
+                        icon="times"
+                        class=closeIcon
+                        @click="removeFilter('id')"
+                    />
+                </label>
+            </div> 
+            <div class="filters-wrapper__line">
+                <label>
+                    Post ID
                     <input 
                         type="number" 
-                        name="id_min" 
+                        name="post_id" 
                         class="input number" 
                         min="1" 
-                        max="500"
-                        v-model="filter.id.min"
-                        @input="filterByRange('id')"
+                        max="100"
+                        v-model="filter.postId"
+                        @input="filterByNumber('postId')"
                     >
-                    <span>To</span>
+                    <font-awesome-icon
+                        icon="times"
+                        class=closeIcon
+                        @click="removeFilter('postId')"
+                    />
+                </label>
+            </div>
+            <div class="filters-wrapper__line">
+                <label>
+                    Email
                     <input 
-                        type="number" 
-                        name="id_max" 
-                        class="input number" 
-                        min="1" 
-                        max="500"
-                        v-model="filter.id.max"
-                        @input="filterByRange('id')"
+                        type="text" 
+                        name="email" 
+                        class="input" 
+                        placeholder="Введите значение"
+                        v-model="filter.email"
+                        @input="filterText('email')"
                     >
-                </div>
-                <font-awesome-icon
-                    icon="times"
-                    class=closeIcon
-                    @click="removeFilter('id')"
-                />
-            </label>
-        </div> 
-        <div class="filters-wrapper__line">
-            <label>
-                Post ID
-                <input 
-                    type="number" 
-                    name="post_id" 
-                    class="input number" 
-                    min="1" 
-                    max="100"
-                    v-model="filter.postId"
-                    @input="filterByNumber('postId')"
-                >
-                <font-awesome-icon
-                    icon="times"
-                    class=closeIcon
-                    @click="removeFilter('postId')"
-                />
-            </label>
-        </div>
-        <div class="filters-wrapper__line">
-            <label>
-                Email
-                <input 
-                    type="text" 
-                    name="email" 
-                    class="input" 
-                    placeholder="Введите значение"
-                    v-model="filter.email"
-                    @input="filterText('email')"
-                >
-                <font-awesome-icon
-                    icon="times"
-                    class=closeIcon
-                    @click="removeFilter('email')"
-                />
-            </label>
-        </div>
-        <div class="filters-wrapper__line">
-            <label>
-                Name
-                <input 
-                    type="text" 
-                    name="name" 
-                    class="input" 
-                    placeholder="Введите значение"
-                    v-model="filter.name"
-                    @input="filterText('name')"
-                >
-                <font-awesome-icon
-                    icon="times"
-                    class=closeIcon
-                    @click="removeFilter('name')"
-                />
-            </label>
+                    <font-awesome-icon
+                        icon="times"
+                        class=closeIcon
+                        @click="removeFilter('email')"
+                    />
+                </label>
+            </div>
+            <div class="filters-wrapper__line">
+                <label>
+                    Name
+                    <input 
+                        type="text" 
+                        name="name" 
+                        class="input" 
+                        placeholder="Введите значение"
+                        v-model="filter.name"
+                        @input="filterText('name')"
+                    >
+                    <font-awesome-icon
+                        icon="times"
+                        class=closeIcon
+                        @click="removeFilter('name')"
+                    />
+                </label>
+            </div>
         </div>
     </div>
+
 </template>
 <script>
 import _ from 'lodash';
@@ -144,6 +154,7 @@ export default {
             numberIsFiltered: false,
             rangeIsFiltered: false,
             hasFilter: false,
+            showFiltersWrapper: false,
         }
     },
     computed: {
@@ -180,6 +191,12 @@ export default {
         }
     },
     methods: {
+        openFilter() {
+            this.showFiltersWrapper = true;
+        },
+        closeFilter() {
+            this.showFiltersWrapper = false;
+        },
         // * при самом первом вызове запоминаем номер страницы. После is equal увеличивает номер страницы на 1.
         // * это нужно для правильного подсчета требуемых рядов на странице. 
         // * Они зависят не от currentPage, то есть нужного id поста, а от разбиения по 5штук на страницу уже отфильтрованных данных
@@ -333,11 +350,21 @@ export default {
 };
 </script>
 <style scoped>
-    .filters-wrapper {
+    .filters-wrapper, .open-filter {
         position: fixed;
         top: 0;
         right: 0;
         z-index: 1;
+    }
+
+    .open-filter {
+        padding: 10px 20px;
+        background-color: blue;
+        color: white;
+        border-radius: 20px;
+    }
+
+    .filters-wrapper {
         padding: 15px;
         background-color: #fff;
         min-width: 500px;

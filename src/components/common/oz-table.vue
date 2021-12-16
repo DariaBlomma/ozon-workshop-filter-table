@@ -1,5 +1,4 @@
 <script lang="jsx">
-import FilterDropdown from './filter-dropdown';
 import OzTablePaginator from './oz-table-paginator';
 import DotsLoaderIcon from './dost-loader.svg';
 
@@ -37,44 +36,29 @@ export default {
   },
   data() {
     return {
-      filter: {
+      sortInfo: {
         // property for sorting
         sortProp: '',
         // asc desc
         sortDirection: '',
-        filterProp: '',
-        filterText: '',
       }
     };
   },
   methods: {
     toggleSort(prop) {
-      this.filter.sortProp = prop;
-      this.filter.sortDirection = (this.filter.sortDirection === 'desc' || !this.filter.sortDirection) ? 'asc' : 'desc';
-      this.$emit('addSort', this.filter);
-    },
-    openFilterTooltip(prop = '') {
-      if (prop === '') {
-        this.$emit('removeFilter', this.filter);
-      }
-      this.filter.filterProp = prop;
-      this.filter.filterText = '';
-    },
-    setFilterText(e) {
-      this.filter.filterText = e.target.value;
-      if (this.filter.filterText) {
-        this.$emit('addFilter', this.filter);
-      }
+      this.sortInfo.sortProp = prop;
+      this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
+      this.$emit('addSort', this.sortInfo);
     },
     renderHead(h, columnsOptions) {
-      const { $style, filter } = this;
+      const { $style, sortInfo } = this;
 
       return columnsOptions.map((column) => {
         const renderedTitle = column.scopedSlots.title ? column.scopedSlots.title() : column.title;
         let sortIcon = 'sort';
 
-        if (filter.sortProp === column.prop) {
-          sortIcon = filter.sortDirection === 'asc' ? 'sort-amount-down' : 'sort-amount-up';
+        if (sortInfo.sortProp === column.prop) {
+          sortIcon = sortInfo.sortDirection === 'asc' ? 'sort-amount-down' : 'sort-amount-up';
         }
 
         return (
@@ -85,17 +69,6 @@ export default {
                 class={$style.sortIcon}
                 icon={sortIcon}
                 on={{ click: () => this.toggleSort(column.prop) }}
-              />
-              <FilterDropdown
-                columnProp={column.prop}
-                shown={column.prop === filter.filterProp}
-                filterText={filter.filterText}
-
-                on={{
-                  openFilterTooltip: () => this.openFilterTooltip(column.prop),
-                  closeFilterTooltip: () => this.openFilterTooltip(),
-                  setFilterText: this.setFilterText,
-                }}
               />
             </div>
           </th>
