@@ -11,10 +11,6 @@
     :empty-message="emptyMessage"
 
     @getPage="infGetPage"
-
-    @addFilter="addFilter"
-    @removeFilter="removeFilter"
-    @addSort="addSort"
   >
     <oz-table-column prop="id" title="ID" />
     <oz-table-column prop="postId" title="Post ID" />
@@ -47,7 +43,6 @@
 </template>
 
 <script>
-import { orderBy } from 'lodash/collection';
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -76,7 +71,6 @@ export default {
       afterNewRows: [],
       allPages: [],
       list: [],
-      sortedList: [],
       filteredList: [],
       neighbourPages: [],
       sortInfo: {},
@@ -91,15 +85,12 @@ export default {
       renderedRowsLength: 0,
       emptyMessage: '',
       staticPaging: false,
-      isSorted: false,
       isFiltered: false,
       pageRendered: false,
       newRowsFetched: false,
-      canBeSorted: true,
       canBeFiltered: true,
       uniqueFiltered: false,
       hasFilter: false,
-      hasSort: false,
     };
   },
   computed: {
@@ -131,38 +122,8 @@ export default {
         console.warn('Could not fetch first page', e);
       }
     },
-    sortList() {
-      this.canBeFiltered = false;
-      let array = [];
-      if (this.isFiltered) {
-        if (this.staticPaging) {
-          array = this.filteredList;
-        } else {
-          if (this.canBeSorted) {
-            array = this.filteredList;
-          }
-        }
-        
-      } else {
-          if (!this.staticPaging) {
-            array = this.fetchedRows;
-          } else {
-            array = this.allPages;
-          }
-      }
-      
-      this.sortedList =  orderBy(array, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
-      // this.sortedList =  orderBy(this.rows, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
-      console.log('this.sortedList: ', this.sortedList);
-
-      if (!this.staticPaging) {
-        this.rows = this.sortedList;
-        console.log('this.rows in add sort: ', this.rows);
-        this.canBeFiltered = true;
-      }
-    },
     filterList(list) {
-      // console.log('in filter list')
+      console.log('in filter list')
       this.hasFilter = true;
       if (this.staticPaging) {
         this.preparePages(list);
@@ -193,38 +154,27 @@ export default {
     //     this.rows = this.filteredList;
     //   }
     // },
-    addFilter(value) {  
-      this.isFiltered = true;
-      this.sortInfo = value;
-      this.filterList();
+    // addFilter(value) {  
+    //   console.log('in add filter')
+    //   this.isFiltered = true;
+    //   this.sortInfo = value;
+    //   this.filterList();
       
-      if (this.staticPaging) {
-        this.preparePages(this.filteredList);
-        this.getPage(this.currentPage);
-      }
-    },
+    //   if (this.staticPaging) {
+    //     this.preparePages(this.filteredList);
+    //     this.getPage(this.currentPage);
+    //   }
+    // },
     // removeFilter(value) {
     removeFilter() {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
       // console.log('in removeFilter');
-      // this.sortInfo = value;
-      // this.sortList();
 
       // if (this.staticPaging) {
       //   this.preparePages(this.sortedList);
       //   this.getPage(this.currentPage);
       // }
-    },
-    addSort(value) {
-      this.isSorted = true;
-      this.sortInfo = value;
-      this.sortList();
-
-      if (this.staticPaging) {
-        this.preparePages(this.sortedList);
-        this.getPage(this.currentPage);
-      }
     },
     // создает разбитый на страницы массив
     preparePages(array) {
@@ -286,59 +236,6 @@ export default {
           this.rows = this.fetchedRows;
         }
         this.currentPage++;
-        //     // if (this.canBeFiltered) {
-        //     //   this.canBeSorted = false;
-        //     // }
-        //     // // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-        //     // this.filterUniqueRows();
-
-        //     // if (this.uniqueFiltered) {
-            //   await this.infGetPage();
-        //     // }
-  
-        // console.log(this.rows);
-        // if (this.sortInfo.filterProp) {     
-        //   this.rememberCurrentPage();
-        //   this.getRequiredRowsLength();
-        //   // повторный вызов нужен для фильтрации по новополученным полям
-        //   this.filterList();
-
-        //   if (this.renderedRows < this.requiredRowsLength) {
-        //     if (this.canBeFiltered) {
-        //       this.canBeSorted = false;
-        //     }
-        //     // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-        //     this.filterUniqueRows();
-
-        //     if (this.uniqueFiltered) {
-        //       await this.infGetPage();
-        //     }      
-
-        //   } else {
-        //     this.filterUniqueRows();
-        //     this.rememberLengthCount = 0;
-        //     this.rememberCurrentPage(true);
-        //     this.canBeSorted = true;
-            
-            if (this.sortInfo.sortProp) {
-              // if (this.canBeSorted) {
-                this.sortList();
-                // console.log('this.rows in inf pager: ', this.rows);
-              // }
-            }
-        //   }
-        // }
-
-        // if (this.sortInfo.sortProp) {
-        //   if (!this.sortInfo.filterProp) {
-        //     // убираем дубликаты после удаления фильтра
-        //     this.filterUniqueRows();
-        //     if (this.uniqueFiltered) {
-        //       this.sortList();
-        //     }        
-        //   }
-        // }
-
       } else {
         this.emptyMessage = 'There are no more pages left';
         return;

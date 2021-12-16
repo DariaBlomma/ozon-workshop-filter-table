@@ -63,7 +63,6 @@ export default {
     toggleSort(prop) {
       this.sortInfo.sortProp = prop;
       this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
-      // this.$emit('addSort', this.sortInfo);
     },
     renderHead(h, columnsOptions) {
       const { $style, sortInfo } = this;
@@ -91,7 +90,6 @@ export default {
       });
     },
     renderRows(h, columnsOptions) {
-      // return this.rows.map((row, index) => {
       return this.sortedRows.map((row, index) => {
         return <tr key={row.id || index}>{...this.renderColumns(h, row, columnsOptions)}</tr>;
       });
@@ -141,9 +139,6 @@ export default {
     const columnsHead = this.renderHead(h, columnsOptions);
     const rows = this.renderRows(h, columnsOptions);
 
-    // console.log('this.rows in table: ', this.rows);
-    // console.log('rows in table: ', rows);
-    // console.log('sorted rows in table: ', this.sortedRows);
     return (
       <div>
         <table class={$style.table}>
