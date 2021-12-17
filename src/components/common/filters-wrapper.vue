@@ -105,6 +105,7 @@
 
 </template>
 <script>
+// todo при статической пагинации после фильтра вызывать getPage и фильтровать уже отсортированные ряды
 import _ from 'lodash';
 
 export default {
@@ -117,6 +118,11 @@ export default {
         fetchedRows: {
             type: Array,
             required: true,
+        },
+        allRows: {
+            type: Array,
+            required: false,
+            default: () => [],
         },
         newRowsLength: {
             type: Boolean,
@@ -162,6 +168,11 @@ export default {
         refilter() {
             return this.newRowsLength && this.hasFilter &&  (this.filteredList?.length < this.requiredRowsLength);
         },
+        // * массив данных для фильтрации. Зависит от типа пагинации
+        // todo - allSortedPages for staticPaging with sort
+        array() {
+            return this.staticPaging ? this.allRows : this.filterArray;
+        }
     },
     watch: {
         async fetchedRows(newValue) { 
@@ -229,33 +240,22 @@ export default {
             console.log('in filter by range');
             this.activeFilterProp = property;
             // ! при множественной фильтрации изменится array
-            let array = [];
-            if (this.isSorted) {
-                if (!this.staticPaging) {
-                    array = this.fetchedRows;          
-                } else {
-                    array = this.sortedList;
-                }
-            } else {
-                array = this.filterArray;          
-                // console.log('array.length: ', array.length);
-            }
 
             if (this.filter[property].min && this.filter[property].max) {
-                this.filteredList =  array.filter(row => {
+                this.filteredList =  this.array.filter(row => {
                     return row[property] >= parseInt(this.filter[property].min) 
                     && row[property] <= parseInt(this.filter[property].max);
                 });
             }
             
             if (this.filter[property].min && !this.filter[property].max) {
-                this.filteredList =  array.filter(row => {
+                this.filteredList =  this.array.filter(row => {
                     return row[property] >= parseInt(this.filter[property].min);
                 });
             }
 
             if (!this.filter[property].min && this.filter[property].max) {
-                this.filteredList =  array.filter(row => {
+                this.filteredList =  this.array.filter(row => {
                     return row[property] <= parseInt(this.filter[property].max);
                 });
             }
@@ -279,18 +279,8 @@ export default {
             console.log('in filter by number');
             this.activeFilterProp = property;
             // ! при множественной фильтрации изменится array
-            let array = [];
-            if (this.isSorted) {
-                if (!this.staticPaging) {
-                    array = this.fetchedRows;          
-                } else {
-                    array = this.sortedList;
-                }
-            } else {
-                array = this.filterArray;          
-                // console.log('array.length: ', array.length);
-            }
-            this.filteredList =  array.filter(row => row[property] === parseInt(this.filter[property]));
+
+            this.filteredList =  this.array.filter(row => row[property] === parseInt(this.filter[property]));
 
             // console.log('this.filteredList: ', this.filteredList);
             if (this.refilter) {
@@ -306,25 +296,10 @@ export default {
 
             console.log('in filter text')
             this.activeFilterProp = property;
-            // console.log('property: ', property);
-            // console.log('email: ', this.filter[property]);
-            // this.filterCount++;
-            let array = [];
-            // todo сделать event bus, чтобы передать информацию о сортировке из самой таблицы
-            if (this.isSorted) {
-                if (!this.staticPaging) {
-                array = this.fetchedRows;          
-                } else {
-                array = this.sortedList;
-                }
-            } else {
-                array = this.filterArray;          
-                // console.log('array.length: ', array.length);
-            }
-            
-            this.filteredList =  array.filter(row => row[property].search(this.filter[property]) > -1);
+
+            this.filteredList =  this.array.filter(row => row[property].search(this.filter[property]) > -1);
             // console.log('this.filteredList: ', this.filteredList);
-             console.log('refilter in filter text', this.refilter);
+            console.log('refilter in filter text', this.refilter);
             //  * в другом месте вызов fetch-for-filter блокирует перефильтрацию
             if (this.refilter) {
                 this.$emit('fetch-for-filter')

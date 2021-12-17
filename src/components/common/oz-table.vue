@@ -18,10 +18,6 @@ export default {
       type: Number,
       default: 0
     },
-    filteredPage: {
-      type: Array,
-      default: () => [],
-    },
     currentPage: {
       type: Number,
       default: 0
@@ -42,10 +38,21 @@ export default {
         sortProp: '',
         // asc desc
         sortDirection: '',
-      }
+      },
+      // * используется при статической пагинации
+      allSortedPages: [],
     };
   },
   computed: {
+    // * массив данных для фильтрации. Зависит от типа пагинации
+    array() {
+        return this.staticPaging ? this.allPages : this.rows;
+    },
+    // * из какого массива рендерить ряды. Зависит от типа пагинации
+    renderedRowsArray() {
+        return this.staticPaging ? this.rows : this.sortedRows;
+    },
+    // * используется только при бесконечной пагинации
     sortedRows() {
       let res;
 
@@ -54,15 +61,21 @@ export default {
       }
 
       res = orderBy(this.rows, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
-      console.log(' res: ',  res);
 
       return res;
     },
   },
   methods: {
+    sortStaticRows() {
+        this.allSortedPages = orderBy(this.allPages, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
+    },
     toggleSort(prop) {
       this.sortInfo.sortProp = prop;
       this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
+      if (this.staticPaging) {
+        this.sortStaticRows();
+        this.$emit('sortList', this.allSortedPages)
+      }
     },
     renderHead(h, columnsOptions) {
       const { $style, sortInfo } = this;
@@ -89,8 +102,8 @@ export default {
         );
       });
     },
-    renderRows(h, columnsOptions) {
-      return this.sortedRows.map((row, index) => {
+    renderRows(h, columnsOptions) { 
+      return this.renderedRowsArray.map((row, index) => {
         return <tr key={row.id || index}>{...this.renderColumns(h, row, columnsOptions)}</tr>;
       });
     },

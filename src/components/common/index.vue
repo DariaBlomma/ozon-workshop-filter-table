@@ -7,10 +7,12 @@
     :all-pages="allPages"
     :total-pages="getTotalPages"
     :current-page="currentPage"
+    :sorted-page="sortedPage"
     :static-paging="staticPaging"
     :empty-message="emptyMessage"
 
-    @getPage="infGetPage"
+    @getPage="getPage"
+    @sortList="sortList"
   >
     <oz-table-column prop="id" title="ID" />
     <oz-table-column prop="postId" title="Post ID" />
@@ -29,6 +31,7 @@
   </oz-table>
   <FiltersWrapper 
     :static-paging="staticPaging"
+    :all-rows="allPages"
     :fetched-rows="fetchedRows"
     :new-rows-length="newRowsLength"
     :current-page="currentPage"
@@ -43,6 +46,7 @@
 </template>
 
 <script>
+// todo доделать для статической пагинации
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -73,6 +77,7 @@ export default {
       list: [],
       filteredList: [],
       neighbourPages: [],
+      sortedPage: [],
       sortInfo: {},
       currentPage: 1,
       constantCurrentPage: 1,
@@ -84,7 +89,7 @@ export default {
       renderedRows: 0,
       renderedRowsLength: 0,
       emptyMessage: '',
-      staticPaging: false,
+      staticPaging: true,
       isFiltered: false,
       pageRendered: false,
       newRowsFetched: false,
@@ -122,6 +127,14 @@ export default {
         console.warn('Could not fetch first page', e);
       }
     },
+    // * используется при статической пагинации
+    sortList(list) {
+      console.log('in sort list')
+      if (this.staticPaging) {
+        this.preparePages(list);
+        this.getPage(this.currentPage);
+      }
+    },
     filterList(list) {
       console.log('in filter list')
       this.hasFilter = true;
@@ -133,39 +146,6 @@ export default {
         // console.log('in filter this.rows: ', this.rows);
         }
     },
-    // async filterList() {
-    //   let array = [];
-    //   if (this.isSorted) {
-    //     if (!this.staticPaging) {
-    //       array = this.fetchedRows;          
-    //     } else {
-    //       array = this.sortedList;
-    //     }
-    //   } else {
-    //     if (!this.staticPaging) {
-    //       array = this.fetchedRows;          
-    //     } else {
-    //       array = this.allPages;
-    //     }
-    //   }
-      
-    //   this.filteredList =  array.filter(row => row[this.sortInfo.filterProp].search(this.sortInfo.filterText) > -1);
-    //   if (!this.staticPaging) {
-    //     this.rows = this.filteredList;
-    //   }
-    // },
-    // addFilter(value) {  
-    //   console.log('in add filter')
-    //   this.isFiltered = true;
-    //   this.sortInfo = value;
-    //   this.filterList();
-      
-    //   if (this.staticPaging) {
-    //     this.preparePages(this.filteredList);
-    //     this.getPage(this.currentPage);
-    //   }
-    // },
-    // removeFilter(value) {
     removeFilter() {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
@@ -186,6 +166,7 @@ export default {
         this.list = list;
       }
     },
+    // * используется при статической пагинации
     async getPage(number) {
       this.rows = this.list[number - 1];
       this.currentPage = number;
