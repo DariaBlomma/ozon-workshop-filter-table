@@ -10,11 +10,8 @@
     :static-paging="staticPaging"
     :empty-message="emptyMessage"
 
-    @getPage="infGetPage"
-
-    @addFilter="addFilter"
-    @removeFilter="removeFilter"
-    @addSort="addSort"
+    @getPage="getPage"
+    @sort-list="sortList"
   >
     <oz-table-column prop="id" title="ID" />
     <oz-table-column prop="postId" title="Post ID" />
@@ -33,18 +30,21 @@
   </oz-table>
   <FiltersWrapper 
     :static-paging="staticPaging"
+    :all-rows="allPages"
     :fetched-rows="fetchedRows"
-    :refilter="refilter"
+    :new-rows-length="newRowsLength"
+    :current-page="currentPage"
+    :page-size="pageSize"
 
     @filter="filterList"
     @remove-filter="removeFilter"
+    @fetch-for-filter="infGetPage"
   />
 </div>
 
 </template>
 
 <script>
-import { orderBy } from 'lodash/collection';
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -68,55 +68,40 @@ export default {
   // * для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
   data() {
     return {
+      // * имеет разное значение в зависимости от типа пагинации. При статической - текущая страница. При бесконечной - отрендеренные страницы
       rows: [],
+      // *при бесконечной пагинации все полученные с сервера на данный момент ряды
       fetchedRows: [],
-      beforeFilterFetchedRows: [],
+      // * при бесконечной пагинации ряды следующей страницы
       newRows: [],
-      afterNewRows: [],
+      // * при статической пагинации все полученные с сервера ряды
       allPages: [],
+      // * при статической пагинации используется как промежуточный массив при разбиении на страницы полученных рядов
       list: [],
-      sortedList: [],
-      filteredList: [],
-      sortFilterInfo: {},
-      emptyMessage: '',
+      // * для определения дублирующихся страниц при сбросе фильтра
+      neighbourPages: [],
       currentPage: 1,
-      constantCurrentPage: 1,
       pageSize: 5,
-      requiredRowsLength: 0,
-      rememberLengthCount: 0,
-      rememberedCurrentPage: 0,
+      // * для бесконечной пагинации, получения большего кол-ва рядов на первой странице
       nextPageFetchedCount: 0,
-      prevFetchedPage: 0,
-      renderedRows: 0,
-      renderedRowsLength: 0,
-      staticPaging: false,
-      hasFilter: false,
-      hasSort: false,
-      canBeSorted: true,
-      canBeFiltered: true,
-      uniqueFiltered: false,
-      isSorted: false,
-      isFiltered: false,
-      pageRendered: false,
+      // * при бесконечной пагинации текст сообщения, что больше нет рядов
+      emptyMessage: '',
+      staticPaging: true,
       newRowsFetched: false,
+      hasFilter: false,
     };
   },
   computed: {
     getTotalPages() {
       return this.list.length;
     },
-    // ! не работает. Консоль выводит false, devtools - true
-    // * отправить на фильтрацию, если есть новые ряды, установлен фильтр и кол-во рядов меньше требуемого
-    refilter() {
-      // console.log('this.hasFilter: ', this.hasFilter);
-      // console.log('!!this.newRows.length: ', !!this.newRows.length);
-      // console.log('(this.rows.length < this.requiredRowsLength: ', (this.rows.length < this.requiredRowsLength));
-      // console.log('this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength): ', this.hasFilter &&  !!this.newRows.length  &&  (this.rows.length < this.requiredRowsLength));
-      return this.hasFilter && !!this.newRows.length && (this.rows.length < this.requiredRowsLength);
-      
+    // * передается пропсом в фильтр для определения refilter
+    newRowsLength() {
+      return !!this.newRows.length;
     },
   },
   methods: {
+    // * при статической пагинации получение всех рядов с сервера
     async fetchAllPages() {
       try {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments`);
@@ -127,6 +112,7 @@ export default {
         console.warn('Could not fetch all pages', e);
       }
     },
+    // * используется при бесконечной пагинации
     async fetchFirstPage() {
       try {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=1`);
@@ -136,31 +122,12 @@ export default {
         console.warn('Could not fetch first page', e);
       }
     },
-    sortList() {
-      this.canBeFiltered = false;
-      let array = [];
-      if (this.isFiltered) {
-        if (this.staticPaging) {
-          array = this.filteredList;
-        } else {
-          if (this.canBeSorted) {
-            array = this.filteredList;
-          }
-        }
-        
-      } else {
-          if (!this.staticPaging) {
-            array = this.fetchedRows;
-          } else {
-            array = this.allPages;
-          }
-      }
-      
-      this.sortedList =  orderBy(array, [this.sortFilterInfo.sortProp], [this.sortFilterInfo.sortDirection]);
-
-      if (!this.staticPaging) {
-        this.rows = this.sortedList;
-        this.canBeFiltered = true;
+    // * используется при статической пагинации
+    sortList(list) {
+      console.log('in sort list')
+      if (this.staticPaging) {
+        this.preparePages(list);
+        this.getPage(this.currentPage);
       }
     },
     filterList(list) {
@@ -172,72 +139,16 @@ export default {
         this.getPage(this.currentPage);
       } else {
         this.rows = list;
-        console.log('in filter this.rows: ', this.rows);
-        }
-// console.log('this.refilter: ', this.refilter);
-// console.log('this.requiredRowsLength', this.requiredRowsLength);
-        // if (this.renderedRows < this.requiredRowsLength) {
-        if (this.refilter) {
-          console.log('less')
-          this.fetchForFilter();
-        } else {
-          this.rememberLengthCount = 0;
-          this.rememberCurrentPage(true);
+        // console.log('in filter this.rows: ', this.rows);
         }
     },
-    // async filterList() {
-    //   let array = [];
-    //   if (this.isSorted) {
-    //     if (!this.staticPaging) {
-    //       array = this.fetchedRows;          
-    //     } else {
-    //       array = this.sortedList;
-    //     }
-    //   } else {
-    //     if (!this.staticPaging) {
-    //       array = this.fetchedRows;          
-    //     } else {
-    //       array = this.allPages;
-    //     }
-    //   }
-      
-    //   this.filteredList =  array.filter(row => row[this.sortFilterInfo.filterProp].search(this.sortFilterInfo.filterText) > -1);
-    //   if (!this.staticPaging) {
-    //     this.rows = this.filteredList;
-    //   }
-    // },
-    addFilter(value) {  
-      this.isFiltered = true;
-      this.sortFilterInfo = value;
-      this.filterList();
-      
-      if (this.staticPaging) {
-        this.preparePages(this.filteredList);
-        this.getPage(this.currentPage);
-      }
-    },
-    // removeFilter(value) {
-    removeFilter() {
-      console.log('in removeFilter')
-      this.hasFilter = false;
-      console.log('hasFilter: ', this.hasFilter);
-      // * при сбросе возвращаемся на ту страницу, откуда началась фильтрация
-      this.rows = this.beforeFilterFetchedRows || this.fetchedRows; 
-      // this.sortFilterInfo = value;
-      // this.sortList();
-
-      // if (this.staticPaging) {
-      //   this.preparePages(this.sortedList);
-      //   this.getPage(this.currentPage);
-      // }
-    },
-    addSort(value) {
-      this.isSorted = true;
-      this.sortFilterInfo = value;
-      this.sortList();
+    removeFilter(list) {
+      this.hasFilter = false; 
+      this.rows = this.fetchedRows; 
+      // console.log('in removeFilter');
 
       if (this.staticPaging) {
-        this.preparePages(this.sortedList);
+        this.preparePages(list);
         this.getPage(this.currentPage);
       }
     },
@@ -251,6 +162,7 @@ export default {
         this.list = list;
       }
     },
+    // * используется при статической пагинации
     async getPage(number) {
       this.rows = this.list[number - 1];
       this.currentPage = number;
@@ -268,6 +180,7 @@ export default {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 1}`);
         this.newRows = await res.json();
         this.nextPageFetchedCount++;
+
         // * если на экране помещается чуть больше 10 рядов при первой загрузке, следующая партия не грузится. Поэтому получаем сразу 2 страницы
         if (this.nextPageFetchedCount === 1) {
           const page2 = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 2}`);
@@ -279,59 +192,26 @@ export default {
         console.warn('Could not fetch next page', e);
       }
     },
-    // * при самом первом вызове запоминаем номер страницы. После is equal увеличивает номер страницы на 1.
-    // * это нужно для правильного подсчета требуемых рядов на странице. 
-    // * Они зависят не от currentPage, то есть нужного id поста, а от разбиения по 5штук на страницу уже отфильтрованных данных
-    // * Получается, после набора требуемого размера рядов, в следующий вызов прибавится 5
-    // ! после уравнения отфильтрованного списка нужно передать true в параметр, чтобы обновить номер запомненной страницы
-    rememberCurrentPage(updatePageNumber = false) {
-      this.rememberedCurrentPage++;
-      if (this.rememberedCurrentPage === 1) {
-        this.rememberedPageNumber = this.currentPage;
-      }
-      if (updatePageNumber) {
-        this.rememberedPageNumber++;
-      }
-      return this.rememberedPageNumber;
-    },
-    // ! после уравнения отфильтрованного списка нужно обнулить rememberLengthCount, чтобы пересчитать requiredLength
-    getRequiredRowsLength() {
-      this.rememberLengthCount++;
-      
-      if (this.rememberLengthCount === 1) {
-        this.requiredRowsLength = this.pageSize * this.rememberedPageNumber;
-        this.beforeFilterFetchedRows = this.fetchedRows;
-        console.log('this.beforeFilterFetchedRows: ', this.beforeFilterFetchedRows);
-      }
-      return this.requiredRowsLength;
-    },
-    filterUniqueRows(array) {
-       // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-      this.uniqueFiltered = false;
-      this.rows = array.filter((value, index, array) => {
-        if (array[index - 1]) {
-          return array[index - 1].id !== value.id;
-        }
-      });
-      this.uniqueFiltered = true;
-    },
-    // * вызывается, когда после фильтрации недостаточно рядов
-    async fetchForFilter() {
-      await this.fetchNextPage() && this.newRowsFetched;
-      this.fetchedRows = [...this.fetchedRows, ...this.newRows];
-      this.currentPage++;
-    },
+    // * также вызывается, когда после фильтрации недостаточно рядов
     async infGetPage() {
-      console.log('in inf pager');
+      // console.log('in inf pager');
       this.blockingPromise && await this.blockingPromise;
+    
+      // * проверка, что не получаем 2 раза ту же страницу (происходит при сбросе фильтра по несуществующим данным)
+      if (this.neighbourPages.length === 2) {
+        this.neighbourPages.shift();
+      }
 
-// * при текущей реализации не нужны, пока оставлю про запас
-      // this.renderedRows = this.$children[0].$refs.tbody.children.length;
-      // this.renderedRowsLength = this.$children[0].$refs.tbody.children.length;
+      if (this.neighbourPages.length < 2) {
+        this.neighbourPages.push(this.currentPage + 1);
+      }
 
-      await this.fetchNextPage() && this.newRowsFetched;
+      if (this.neighbourPages.length && this.neighbourPages[0] !== this.neighbourPages[1]) {
+        await this.fetchNextPage() && this.newRowsFetched;
+      } else {
+        return;
+      }    
       
-
       if (this.newRows.length) {
         this.fetchedRows = [...this.fetchedRows, ...this.newRows];
 
@@ -340,72 +220,10 @@ export default {
           this.rows = this.fetchedRows;
         }
         this.currentPage++;
-
-        if (this.hasFilter) {
-          this.rememberCurrentPage();
-          this.getRequiredRowsLength();
-          // todo - иногда попадаются дублирующиеся ряды. Cкорее, страницы, после сброса фильтра
-          // todo - filter uniquerows убирает первый ряд. М.б дело в прокрутке?
-        }
-
-        //     // if (this.canBeFiltered) {
-        //     //   this.canBeSorted = false;
-        //     // }
-        //     // // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-        //     // this.filterUniqueRows();
-
-        //     // if (this.uniqueFiltered) {
-            //   await this.infGetPage();
-        //     // }
-  
-        // console.log(this.rows);
-        // if (this.sortFilterInfo.filterProp) {     
-        //   this.rememberCurrentPage();
-        //   this.getRequiredRowsLength();
-        //   // повторный вызов нужен для фильтрации по новополученным полям
-        //   this.filterList();
-
-        //   if (this.renderedRows < this.requiredRowsLength) {
-        //     if (this.canBeFiltered) {
-        //       this.canBeSorted = false;
-        //     }
-        //     // * при быстрой прокрутке элементы могут дублироваться. Поэтому фильтруем на уникальность
-        //     this.filterUniqueRows();
-
-        //     if (this.uniqueFiltered) {
-        //       await this.infGetPage();
-        //     }      
-
-        //   } else {
-        //     this.filterUniqueRows();
-        //     this.rememberLengthCount = 0;
-        //     this.rememberCurrentPage(true);
-        //     this.canBeSorted = true;
-            
-        //     if (this.sortFilterInfo.sortProp) {
-        //       if (this.canBeSorted) {
-        //         this.sortList();
-        //       }
-        //     }
-        //   }
-        // }
-
-        // if (this.sortFilterInfo.sortProp) {
-        //   if (!this.sortFilterInfo.filterProp) {
-        //     // убираем дубликаты после удаления фильтра
-        //     this.filterUniqueRows();
-        //     if (this.uniqueFiltered) {
-        //       this.sortList();
-        //     }        
-        //   }
-        // }
-
       } else {
         this.emptyMessage = 'There are no more pages left';
-
         return;
       }
-
     }
   },
 };

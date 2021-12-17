@@ -1,5 +1,6 @@
 <script lang="jsx">
-import FilterDropdown from './filter-dropdown';
+import eventBus from './eventBus';
+import { orderBy } from 'lodash/collection';
 import OzTablePaginator from './oz-table-paginator';
 import DotsLoaderIcon from './dost-loader.svg';
 
@@ -18,10 +19,6 @@ export default {
       type: Number,
       default: 0
     },
-    filteredPage: {
-      type: Array,
-      default: () => [],
-    },
     currentPage: {
       type: Number,
       default: 0
@@ -37,44 +34,60 @@ export default {
   },
   data() {
     return {
-      filter: {
+      sortInfo: {
         // property for sorting
         sortProp: '',
         // asc desc
         sortDirection: '',
-        filterProp: '',
-        filterText: '',
-      }
+      },
+      // * используется при статической пагинации
+      allSortedPages: [],
     };
   },
-  methods: {
-    toggleSort(prop) {
-      this.filter.sortProp = prop;
-      this.filter.sortDirection = (this.filter.sortDirection === 'desc' || !this.filter.sortDirection) ? 'asc' : 'desc';
-      this.$emit('addSort', this.filter);
+  computed: {
+    // * массив данных для фильтрации. Зависит от типа пагинации
+    array() {
+        return this.staticPaging ? this.allPages : this.rows;
     },
-    openFilterTooltip(prop = '') {
-      if (prop === '') {
-        this.$emit('removeFilter', this.filter);
+    // * из какого массива рендерить ряды. Зависит от типа пагинации
+    renderedRowsArray() {
+        return this.staticPaging ? this.rows : this.sortedRows;
+    },
+    // * используется только при бесконечной пагинации
+    sortedRows() {
+      let res;
+
+      if (!this.sortInfo.sortProp) {
+        res =  this.rows;
       }
-      this.filter.filterProp = prop;
-      this.filter.filterText = '';
+
+      res = orderBy(this.rows, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
+
+      return res;
     },
-    setFilterText(e) {
-      this.filter.filterText = e.target.value;
-      if (this.filter.filterText) {
-        this.$emit('addFilter', this.filter);
+  },
+  methods: {
+    sortStaticRows() {
+        this.allSortedPages = orderBy(this.allPages, [this.sortInfo.sortProp], [this.sortInfo.sortDirection]);
+    },
+    toggleSort(prop) {
+      this.sortInfo.sortProp = prop;
+      this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
+      if (this.staticPaging) {
+        this.sortStaticRows();
+        this.$emit('sort-list', this.allSortedPages);
+        eventBus.$emit('sort-list', this.allSortedPages);
       }
     },
     renderHead(h, columnsOptions) {
-      const { $style, filter } = this;
+      const { $style, sortInfo } = this;
 
       return columnsOptions.map((column) => {
         const renderedTitle = column.scopedSlots.title ? column.scopedSlots.title() : column.title;
         let sortIcon = 'sort';
 
-        if (filter.sortProp === column.prop) {
-          sortIcon = filter.sortDirection === 'asc' ? 'sort-amount-down' : 'sort-amount-up';
+        if (sortInfo.sortProp === column.prop) {
+          sortIcon = sortInfo.sortDirection === 'asc' ? 'sort-amount-down' : 'sort-amount-up';
         }
 
         return (
@@ -86,24 +99,13 @@ export default {
                 icon={sortIcon}
                 on={{ click: () => this.toggleSort(column.prop) }}
               />
-              <FilterDropdown
-                columnProp={column.prop}
-                shown={column.prop === filter.filterProp}
-                filterText={filter.filterText}
-
-                on={{
-                  openFilterTooltip: () => this.openFilterTooltip(column.prop),
-                  closeFilterTooltip: () => this.openFilterTooltip(),
-                  setFilterText: this.setFilterText,
-                }}
-              />
             </div>
           </th>
         );
       });
     },
-    renderRows(h, columnsOptions) {
-      return this.rows.map((row, index) => {
+    renderRows(h, columnsOptions) { 
+      return this.renderedRowsArray.map((row, index) => {
         return <tr key={row.id || index}>{...this.renderColumns(h, row, columnsOptions)}</tr>;
       });
     },
@@ -144,9 +146,6 @@ export default {
         <div {...{ class: this.$style.infPager, style, directives }} />
       );
     },
-    viewHandler() {
-            console.log('is in view')
-    }
   },
   render(h) {
     const { $style, totalPages, currentPage, staticPaging, emptyMessage, $listeners } = this;
@@ -154,7 +153,7 @@ export default {
     const columnsOptions = this.getColumnOptions();
     const columnsHead = this.renderHead(h, columnsOptions);
     const rows = this.renderRows(h, columnsOptions);
-console.log('in render')
+
     return (
       <div>
         <table class={$style.table}>
@@ -162,7 +161,6 @@ console.log('in render')
           <tbody ref="tbody">{...rows}</tbody>
           { emptyMessage || ""}
         </table>
-        <span v-view={this.viewHandler}>After table</span>
         {staticPaging
         
           ? <OzTablePaginator totalPages={totalPages} currentPage={currentPage} on={{ getPage: getPage }} />
