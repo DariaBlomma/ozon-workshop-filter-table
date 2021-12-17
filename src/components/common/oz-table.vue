@@ -75,8 +75,8 @@ export default {
       this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
       if (this.staticPaging) {
         this.sortStaticRows();
-        this.$emit('sortList', this.allSortedPages);
-        eventBus.$emit('sortList', this.allSortedPages);
+        this.$emit('sort-list', this.allSortedPages);
+        eventBus.$emit('sort-list', this.allSortedPages);
       }
     },
     renderHead(h, columnsOptions) {

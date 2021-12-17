@@ -105,7 +105,6 @@
 
 </template>
 <script>
-// todo при статической пагинации после фильтра вызывать getPage и фильтровать уже отсортированные ряды
 import _ from 'lodash';
 import eventBus from './eventBus';
 
@@ -152,12 +151,11 @@ export default {
             activeFilterProp: "",
             filterArray: [],
             filteredList: [],
+            // * отсортированный массив при статической пагинации
             sortedList: [],
             requiredRowsLength: 5,
             rememberLengthCount: 0,
             rememberedCurrentPage: 0,
-            nextPageFetchedCount: 0,
-            isSorted: false,
             textIsFiltered: false,
             numberIsFiltered: false,
             rangeIsFiltered: false,
@@ -207,14 +205,13 @@ export default {
     },
     mounted() {
         // adding eventBus listener
-        eventBus.$on('sortList', (data) => {
-            this.sortedList = data
-        console.log('Custom event triggered!', data)
-        })
+        eventBus.$on('sort-list', (data) => {
+            this.sortedList = data;
+        });
     },
     beforeDestroy() {
         // removing eventBus listener
-        eventBus.$off('sortList')
+        eventBus.$off('sort-list');
     },
     methods: {
         openFilter() {

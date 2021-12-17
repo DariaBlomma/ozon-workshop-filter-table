@@ -7,12 +7,11 @@
     :all-pages="allPages"
     :total-pages="getTotalPages"
     :current-page="currentPage"
-    :sorted-page="sortedPage"
     :static-paging="staticPaging"
     :empty-message="emptyMessage"
 
     @getPage="getPage"
-    @sortList="sortList"
+    @sort-list="sortList"
   >
     <oz-table-column prop="id" title="ID" />
     <oz-table-column prop="postId" title="Post ID" />
@@ -46,7 +45,6 @@
 </template>
 
 <script>
-// todo доделать для статической пагинации
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -69,32 +67,26 @@ export default {
   // * для сброса фильтров или сортировки к исходному состоянию должен быть неизменяемый массив - fetchedRows, allPages 
   data() {
     return {
+      // * имеет разное значение в зависимости от типа пагинации. При статической - текущая страница. При бесконечной - отрендеренные страницы
       rows: [],
+      // *при бесконечной пагинации все полученные с сервера на данный момент ряды
       fetchedRows: [],
+      // * при бесконечной пагинации ряды следующей страницы
       newRows: [],
-      afterNewRows: [],
+      // * при статической пагинации все полученные с сервера ряды
       allPages: [],
+      // * при статической пагинации используется как промежуточный массив при разбиении на страницы полученных рядов
       list: [],
-      filteredList: [],
+      // * для определения дублирующихся страниц при сбросе фильтра
       neighbourPages: [],
-      sortedPage: [],
-      sortInfo: {},
       currentPage: 1,
-      constantCurrentPage: 1,
       pageSize: 5,
-      requiredRowsLength: 5,
-      rememberLengthCount: 0,
-      rememberedCurrentPage: 0,
+      // * для бесконечной пагинации, получения большего кол-ва рядов на первой странице
       nextPageFetchedCount: 0,
-      renderedRows: 0,
-      renderedRowsLength: 0,
+      // * при бесконечной пагинации текст сообщения, что больше нет рядов
       emptyMessage: '',
       staticPaging: true,
-      isFiltered: false,
-      pageRendered: false,
       newRowsFetched: false,
-      canBeFiltered: true,
-      uniqueFiltered: false,
       hasFilter: false,
     };
   },
@@ -108,6 +100,7 @@ export default {
     }
   },
   methods: {
+    // * при статической пагинации получение всех рядов с сервера
     async fetchAllPages() {
       try {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments`);
@@ -118,6 +111,7 @@ export default {
         console.warn('Could not fetch all pages', e);
       }
     },
+    // * используется при бесконечной пагинации
     async fetchFirstPage() {
       try {
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=1`);
