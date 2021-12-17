@@ -1,4 +1,5 @@
 <script lang="jsx">
+import eventBus from './eventBus';
 import { orderBy } from 'lodash/collection';
 import OzTablePaginator from './oz-table-paginator';
 import DotsLoaderIcon from './dost-loader.svg';
@@ -74,7 +75,8 @@ export default {
       this.sortInfo.sortDirection = (this.sortInfo.sortDirection === 'desc' || !this.sortInfo.sortDirection) ? 'asc' : 'desc';
       if (this.staticPaging) {
         this.sortStaticRows();
-        this.$emit('sortList', this.allSortedPages)
+        this.$emit('sortList', this.allSortedPages);
+        eventBus.$emit('sortList', this.allSortedPages);
       }
     },
     renderHead(h, columnsOptions) {

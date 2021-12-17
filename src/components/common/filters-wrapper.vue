@@ -107,6 +107,7 @@
 <script>
 // todo при статической пагинации после фильтра вызывать getPage и фильтровать уже отсортированные ряды
 import _ from 'lodash';
+import eventBus from './eventBus';
 
 export default {
     name: "FiltersWrapper",
@@ -151,6 +152,7 @@ export default {
             activeFilterProp: "",
             filterArray: [],
             filteredList: [],
+            sortedList: [],
             requiredRowsLength: 5,
             rememberLengthCount: 0,
             rememberedCurrentPage: 0,
@@ -169,10 +171,12 @@ export default {
             return this.newRowsLength && this.hasFilter &&  (this.filteredList?.length < this.requiredRowsLength);
         },
         // * массив данных для фильтрации. Зависит от типа пагинации
-        // todo - allSortedPages for staticPaging with sort
         array() {
-            return this.staticPaging ? this.allRows : this.filterArray;
-        }
+            return this.staticPaging ? this.staticRows : this.filterArray;
+        },
+        staticRows() {
+            return this.sortedList.length ? this.sortedList : this.allRows;
+        },
     },
     watch: {
         async fetchedRows(newValue) { 
@@ -200,6 +204,17 @@ export default {
                 this.removeFilter(this.activeFilterProp)
             }
         }
+    },
+    mounted() {
+        // adding eventBus listener
+        eventBus.$on('sortList', (data) => {
+            this.sortedList = data
+        console.log('Custom event triggered!', data)
+        })
+    },
+    beforeDestroy() {
+        // removing eventBus listener
+        eventBus.$off('sortList')
     },
     methods: {
         openFilter() {
