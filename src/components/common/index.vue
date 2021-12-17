@@ -1,51 +1,6 @@
-<template>
-<div>
-  <!--  @getPage="infGetPage" для бесконечной пагиинации -->
-  <!-- @getPage="getPage" для тстатической пагинации -->
-  <oz-table
-    :rows="rows"
-    :all-pages="allPages"
-    :total-pages="getTotalPages"
-    :current-page="currentPage"
-    :static-paging="staticPaging"
-    :empty-message="emptyMessage"
-
-    @getPage="getPage"
-    @sort-list="sortList"
-  >
-    <oz-table-column prop="id" title="ID" />
-    <oz-table-column prop="postId" title="Post ID" />
-
-    <oz-table-column prop="email">
-      <template #title>
-        <b>Email</b>
-      </template>
-
-      <template #body="{ row }">
-        <a :href="`mailto:${row.email}`">{{ row.email }}</a>
-      </template>
-    </oz-table-column>
-
-    <oz-table-column prop="name" title="Name" />
-  </oz-table>
-  <FiltersWrapper 
-    :static-paging="staticPaging"
-    :all-rows="allPages"
-    :fetched-rows="fetchedRows"
-    :new-rows-length="newRowsLength"
-    :current-page="currentPage"
-    :page-size="pageSize"
-
-    @filter="filterList"
-    @remove-filter="removeFilter"
-    @fetch-for-filter="infGetPage"
-  />
-</div>
-
-</template>
-
-<script>
+<script lang="jsx">
 import OzTable from './oz-table';
+// import { OzTable } from '@/components/common';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
 
@@ -54,7 +9,7 @@ export default {
   name: 'Common',
   components: {
     OzTableColumn,
-    OzTable,
+    // OzTable,
     FiltersWrapper,
   },
   async created() {
@@ -225,6 +180,52 @@ export default {
         return;
       }
     }
+  },
+  render() {
+      // onGetPage={this.infGetPage} для бесконечной пагиинации
+      // onGetPage={this.getPage} для тстатической пагинации
+
+      // ? используются дефолтные слоты для 4 колонок как this.$slots.default?
+      // ? в колонке email  title, body получается именованным слотом?
+      const scopedSlots = {
+        title: () => <b>Email</b>,
+        body: ( { row }) => <a href={ `mailto:${row.email}` }>{ row.email }</a>,
+      };
+    return (
+      <div>
+          <OzTable
+            rows={this.rows}
+            all-pages={this.allPages}
+            total-pages={this.getTotalPages}
+            current-page={this.currentPage}
+            static-paging={this.staticPaging}
+            empty-message={this.emptyMessage}
+
+            onGetPage={this.getPage}
+            onSort-list={this.sortList}
+          >
+          
+            <oz-table-column prop="id" title="ID" />
+            <oz-table-column prop="postId" title="Post ID" />
+
+            <oz-table-column prop="email" scopedSlots={scopedSlots} />
+
+            <oz-table-column prop="name" title="Name" />
+          </OzTable>
+          <FiltersWrapper 
+            static-paging={this.staticPaging}
+            all-rows={this.allPages}
+            fetched-rows={this.fetchedRows}
+            new-rows-length={this.newRowsLength}
+            current-page={this.currentPage}
+            page-size={this.pageSize}
+
+            onFilter={this.filterList}
+            onRemove-filter={this.removeFilter}
+            onFetch-for-filter={this.infGetPage}
+          />
+        </div>
+    );
   },
 };
 </script>

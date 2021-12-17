@@ -1,110 +1,4 @@
-<template>
-    <div>
-        <button 
-            class="btn open-filter" 
-            @click="openFilter"
-        >
-            Filter
-        </button>
-        <div class="filters-wrapper" v-if="showFiltersWrapper">
-            <font-awesome-icon
-                icon="times"
-                class=closeIcon
-                @click="closeFilter"
-            />
-            <h1>Filters</h1>  
-            <div class="filters-wrapper__line">
-                <label class="range-label">
-                    ID
-                    <div class="range">
-                        <span>From</span>
-                        <input 
-                            type="number" 
-                            name="id_min" 
-                            class="input number" 
-                            min="1" 
-                            max="500"
-                            v-model="filter.id.min"
-                            @input="filterByRange('id')"
-                        >
-                        <span>To</span>
-                        <input 
-                            type="number" 
-                            name="id_max" 
-                            class="input number" 
-                            min="1" 
-                            max="500"
-                            v-model="filter.id.max"
-                            @input="filterByRange('id')"
-                        >
-                    </div>
-                    <font-awesome-icon
-                        icon="times"
-                        class=closeIcon
-                        @click="removeFilter('id')"
-                    />
-                </label>
-            </div> 
-            <div class="filters-wrapper__line">
-                <label>
-                    Post ID
-                    <input 
-                        type="number" 
-                        name="post_id" 
-                        class="input number" 
-                        min="1" 
-                        max="100"
-                        v-model="filter.postId"
-                        @input="filterByNumber('postId')"
-                    >
-                    <font-awesome-icon
-                        icon="times"
-                        class=closeIcon
-                        @click="removeFilter('postId')"
-                    />
-                </label>
-            </div>
-            <div class="filters-wrapper__line">
-                <label>
-                    Email
-                    <input 
-                        type="text" 
-                        name="email" 
-                        class="input" 
-                        placeholder="Введите значение"
-                        v-model="filter.email"
-                        @input="filterText('email')"
-                    >
-                    <font-awesome-icon
-                        icon="times"
-                        class=closeIcon
-                        @click="removeFilter('email')"
-                    />
-                </label>
-            </div>
-            <div class="filters-wrapper__line">
-                <label>
-                    Name
-                    <input 
-                        type="text" 
-                        name="name" 
-                        class="input" 
-                        placeholder="Введите значение"
-                        v-model="filter.name"
-                        @input="filterText('name')"
-                    >
-                    <font-awesome-icon
-                        icon="times"
-                        class=closeIcon
-                        @click="removeFilter('name')"
-                    />
-                </label>
-            </div>
-        </div>
-    </div>
-
-</template>
-<script>
+<script lang="jsx">
 import _ from 'lodash';
 import eventBus from './eventBus';
 
@@ -332,6 +226,132 @@ export default {
             
             this.$emit('remove-filter',  this.staticRows);
         },
+    },
+    render() {
+        return !this.showFiltersWrapper 
+            ?  (
+                    <button 
+                        class="btn open-filter" 
+                        onClick={this.openFilter}
+                    >
+                        Filter
+                    </button> 
+                ) 
+            :   (
+                    <div class="filters-wrapper">
+                        <font-awesome-icon
+                            icon="times"
+                            class='closeIcon'
+                            onClick={this.closeFilter}
+                        />
+                        <h1>Filters</h1>  
+                        <div class="filters-wrapper__line">
+                            <label class="range-label">
+                                ID
+                                <div class="range">
+                                    <span>From</span>
+                                    <input 
+                                        type="number" 
+                                        name="id_min" 
+                                        class="input number" 
+                                        min="1" 
+                                        max="500"
+                                        v-model={this.filter.id.min}
+                                        onInput={() => {
+                                            this.filterByRange('id')
+                                        }}
+                                    />
+                                    <span>To</span>
+                                    <input 
+                                        type="number" 
+                                        name="id_max" 
+                                        class="input number" 
+                                        min="1" 
+                                        max="500"
+                                        v-model={this.filter.id.max}
+                                        onInput={() => {
+                                            this.filterByRange('id')
+                                        }}
+                                    />
+                                </div>
+                                <font-awesome-icon
+                                    icon="times"
+                                    class='closeIcon'
+                                    onClick={() => {
+                                        this.removeFilter('id');
+                                    }}
+                                />
+                            </label>
+                        </div> 
+                        <div class="filters-wrapper__line">
+                            <label>
+                                Post ID
+                                <input 
+                                    type="number" 
+                                    name="post_id" 
+                                    class="input number" 
+                                    min="1" 
+                                    max="100"
+                                    v-model={this.filter.postId}
+                                    onInput={() => {
+                                        this.filterByNumber('postId')
+                                    }}
+                                />
+                                <font-awesome-icon
+                                    icon="times"
+                                    class='closeIcon'
+                                    onClick={() => {
+                                        this.removeFilter('postId')
+                                    }}
+                                />
+                            </label>
+                        </div>
+                        <div class="filters-wrapper__line">
+                            <label>
+                                Email
+                                <input 
+                                    type="text" 
+                                    name="email" 
+                                    class="input" 
+                                    placeholder="Введите значение"
+                                    v-model={this.filter.email}
+                                    onInput={() => {
+                                        this.filterText('email')
+                                    }}
+                                />
+                                <font-awesome-icon
+                                    icon="times"
+                                    class='closeIcon'
+                                    onClick={() => {
+                                        this.removeFilter('email')
+                                    }}
+                                />
+                            </label>
+                        </div>
+                        <div class="filters-wrapper__line">
+                            <label>
+                                Name
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    class="input" 
+                                    placeholder="Введите значение"
+                                    v-model={this.filter.name}
+                                    onInput={() => {
+                                        this.filterText('name')
+                                    }}
+                                />
+                                <font-awesome-icon
+                                    icon="times"
+                                    class='closeIcon'
+                                    onClick={() => {
+                                        this.removeFilter('name')
+                                    }}
+                                />
+                            </label>
+                        </div>
+                    </div>
+                );
     },
 };
 </script>
