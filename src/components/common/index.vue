@@ -146,15 +146,15 @@ export default {
         // console.log('in filter this.rows: ', this.rows);
         }
     },
-    removeFilter() {
+    removeFilter(list) {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
       // console.log('in removeFilter');
 
-      // if (this.staticPaging) {
-      //   this.preparePages(this.sortedList);
-      //   this.getPage(this.currentPage);
-      // }
+      if (this.staticPaging) {
+        this.preparePages(list);
+        this.getPage(this.currentPage);
+      }
     },
     // создает разбитый на страницы массив
     preparePages(array) {

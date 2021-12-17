@@ -326,7 +326,6 @@ export default {
             this.hasFilter = false;
 
             if (typeof this.filter[property] === 'object') {
-                // console.log('this.filter[property]: ', this.filter[property]);
                 this.filter[property].min = "";
                 this.filter[property].max = "";
             }
@@ -334,7 +333,7 @@ export default {
                 this.filter[property] = "";
             }
             
-            this.$emit('remove-filter');
+            this.$emit('remove-filter',  this.staticRows);
         },
     },
 };
