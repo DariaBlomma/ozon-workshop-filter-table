@@ -119,8 +119,10 @@ export default {
       });
     },
     getColumnOptions() {
+      // ? item.tag существует верный, а item.componentOptions.tag undefined
+      // ? componentOptions.tag где задается ?
       return this.$slots.default.
-        filter(item => item.componentOptions && item.componentOptions.tag === 'oz-table-column').
+        filter(item => item.componentOptions && (item.tag.includes('oz-table-column') || item.componentOptions.tag === 'oz-table-column')).
         map(column =>
           Object.assign({}, column.componentOptions.propsData, {
               scopedSlots: column.data.scopedSlots || {}

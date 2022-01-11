@@ -1,13 +1,19 @@
-<script lang="jsx">
+<script>
 import Common from '@/components/common';
 
 export default {
   name: 'App',
-  render() {
-    return (
-      <div id="app">
-        <Common />
-      </div>
+  render(createElement) {
+    return createElement (
+      'div',
+      {
+        attrs: {
+          id: 'app',
+        },
+      },
+      [
+        createElement(Common),
+      ],
     );
   },
 };

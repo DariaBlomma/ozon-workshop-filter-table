@@ -1,4 +1,4 @@
-<script lang="jsx">
+<script>
 import OzTable from './oz-table';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
@@ -6,9 +6,97 @@ import FiltersWrapper from './filters-wrapper';
 
 export default {
   name: 'Common',
-  components: {
-    // ? не работает без объявления здесь
-    OzTableColumn,
+    render(createElement) {
+    return createElement(
+      'div', {}, 
+      [
+        createElement(OzTable, 
+          {
+            props: {
+              rows: this.rows,
+              allPages: this.allPages,
+              totalPages: this.getTotalPages,
+              currentPage: this.currentPage,
+              staticPaging: this.staticPaging,
+              emptyMessage: this.emptyMessage,
+            },
+            on: {
+              getPage: this.getPage,
+              sortList: this.sortList,
+            },
+          },
+          [
+            createElement(OzTableColumn, 
+              {
+                props: {
+                  prop: 'id', 
+                  title: 'ID',
+                },
+              },
+            ),
+            createElement(OzTableColumn, 
+              {
+                props: {
+                  prop: 'postId', 
+                  title: 'Post ID',
+                },
+              },
+            ),
+            createElement(OzTableColumn, 
+              {
+                props: {
+                  prop: 'email', 
+                },
+                scopedSlots: {
+                  title: () => createElement('b', 
+                    {
+                      domProps: {
+                        innerHTML: 'Email',
+                      },
+                    },
+                  ),
+                  body: (props) => createElement('a', 
+                    {
+                      attrs: {
+                        href: `mailto:${props.email}`
+                      },
+                      domProps: {
+                        innerHTML: `${props.email}`,
+                      },
+                    },
+                  ),
+                },
+              },
+            ),
+            createElement(OzTableColumn, 
+              {
+                props: {
+                  prop: 'name', 
+                  title: 'Name',
+                },
+              },
+            ),
+          ]
+        ),
+        createElement(FiltersWrapper, 
+          {
+            props: {
+              staticPaging: this.staticPaging,
+              allRows: this.allPages,
+              fetchedRows: this.fetchedRows,
+              newRowsLength: this.newRowsLength,
+              currentPage: this.currentPage,
+              pageSize: this.pageSize,
+            },
+            on: {
+              removeFilter: this.removeFilter,
+              fetchForFilter: this.infGetPage,
+              filter: this.filterList,
+            },
+          }
+        )
+      ],
+    )
   },
   async created() {
     if (this.staticPaging) {
@@ -178,52 +266,6 @@ export default {
         return;
       }
     }
-  },
-  render() {
-      // onGetPage={this.infGetPage} для бесконечной пагиинации
-      // onGetPage={this.getPage} для тстатической пагинации
-
-      // ? используются дефолтные слоты для 4 колонок как this.$slots.default?
-      // ? в колонке email  title, body получается именованным слотом?
-      const scopedSlots = {
-        title: () => <b>Email</b>,
-        body: ( { row }) => <a href={ `mailto:${row.email}` }>{ row.email }</a>,
-      };
-    return (
-      <div>
-          <OzTable
-            rows={this.rows}
-            all-pages={this.allPages}
-            total-pages={this.getTotalPages}
-            current-page={this.currentPage}
-            static-paging={this.staticPaging}
-            empty-message={this.emptyMessage}
-
-            onGetPage={this.getPage}
-            onSort-list={this.sortList}
-          >
-          
-            <oz-table-column prop="id" title="ID" />
-            <oz-table-column prop="postId" title="Post ID" />
-
-            <oz-table-column prop="email" scopedSlots={scopedSlots} />
-
-            <oz-table-column prop="name" title="Name" />
-          </OzTable>
-          <FiltersWrapper 
-            static-paging={this.staticPaging}
-            all-rows={this.allPages}
-            fetched-rows={this.fetchedRows}
-            new-rows-length={this.newRowsLength}
-            current-page={this.currentPage}
-            page-size={this.pageSize}
-
-            onFilter={this.filterList}
-            onRemove-filter={this.removeFilter}
-            onFetch-for-filter={this.infGetPage}
-          />
-        </div>
-    );
   },
 };
 </script>
