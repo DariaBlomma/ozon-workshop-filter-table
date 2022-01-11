@@ -1,25 +1,14 @@
-<template>
-  <div id="app">
-    <Common v-if="common"/>
-    <Paging v-else/>
-  </div>
-</template>
-
-<script>
-
+<script lang="jsx">
 import Common from '@/components/common';
-import Paging from '@/components/with-paging';
 
 export default {
   name: 'App',
-  components: {
-    Common,
-    Paging,
-  },
-  data() {
-    return {
-      common: true,
-    }
+  render() {
+    return (
+      <div id="app">
+        <Common />
+      </div>
+    );
   },
 };
 </script>

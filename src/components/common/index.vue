@@ -1,6 +1,5 @@
 <script lang="jsx">
 import OzTable from './oz-table';
-// import { OzTable } from '@/components/common';
 import OzTableColumn from './oz-table-column';
 import FiltersWrapper from './filters-wrapper';
 
@@ -8,9 +7,8 @@ import FiltersWrapper from './filters-wrapper';
 export default {
   name: 'Common',
   components: {
+    // ? не работает без объявления здесь
     OzTableColumn,
-    // OzTable,
-    FiltersWrapper,
   },
   async created() {
     if (this.staticPaging) {
