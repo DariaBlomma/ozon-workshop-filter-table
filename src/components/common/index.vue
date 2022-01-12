@@ -6,7 +6,7 @@ import FiltersWrapper from './filters-wrapper';
 
 export default {
   name: 'Common',
-    render(createElement) {
+  render(createElement) {
     return createElement(
       'div', {}, 
       [
@@ -55,16 +55,19 @@ export default {
                       },
                     },
                   ),
-                  body: (props) => createElement('a', 
+                  body: ({ row: { email } }) => {
+                    // * props : row: { name, email, ....}, 
+                    // * props.row.email
+                  return createElement('a', 
                     {
                       attrs: {
-                        href: `mailto:${props.email}`
+                        href: `mailto:${email}`
                       },
                       domProps: {
-                        innerHTML: `${props.email}`,
+                        innerHTML: `${email}`,
                       },
                     },
-                  ),
+                  )},
                 },
               },
             ),

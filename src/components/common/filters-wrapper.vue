@@ -1,9 +1,290 @@
-<script lang="jsx">
+<script>
 import _ from 'lodash';
 import eventBus from './eventBus';
+// * font-awesome-icon зарегистрирован глобально в main js
 
 export default {
     name: "FiltersWrapper",
+    render(createElement) {
+        return !this.showFiltersWrapper 
+            ?  createElement( 'button', 
+                    {
+                        attrs: {
+                            class: "btn open-filter",
+                        },
+                        on: {
+                            click: this.openFilter,
+                        },
+                        domProps: {
+                            innerHTML: "Filter",
+                        }
+                    },
+                )
+            :   createElement('div', 
+                    {
+                        attrs: {
+                            class: "filters-wrapper",
+                        },
+                    },
+                    [
+                        createElement('font-awesome-icon', 
+                            {
+                                class: {
+                                    closeIcon: true,
+                                },
+                                // ? так не применяется
+                                attrs: {
+                                    class: 'closeIcon',
+                                },
+                                props: {
+                                    icon: "times",
+                                },
+                                on: {
+                                    click: this.closeFilter,
+                                },
+                            },
+                        ),
+                        createElement('h1', 'Filters'),
+                        // id
+                        createElement('div', 
+                            {
+                                attrs: {
+                                    class: "filters-wrapper__line",
+                                },
+                            },
+                            [
+                                createElement('label',
+                                    {
+                                        attrs: {
+                                            class: "range-label",
+                                        },
+                                    },
+                                    [
+                                        'ID',
+                                        createElement('div', 
+                                            {
+                                                attrs: {
+                                                    class: "range",
+                                                },
+                                            },
+                                            [
+                                                createElement('span', 'From'),
+                                                createElement('input',
+                                                    {
+                                                        attrs: {
+                                                            type: 'number',
+                                                            name: 'id_min',
+                                                            class: 'input number',
+                                                            min: '1',
+                                                            max: '500',
+                                                        },
+                                                        on: {
+                                                            input:  (event) => {
+                                                                this.filter.id.min = event.target.value;
+                                                                this.filterByRange('id');
+                                                            },
+                                                        },
+                                                    },
+                                                ),
+                                                createElement('span', 'To'),
+                                                                                                createElement('input',
+                                                    {
+                                                        attrs: {
+                                                            type: 'number',
+                                                            name: 'id_max',
+                                                            class: 'input number',
+                                                            min: '1',
+                                                            max: '500',
+                                                        },
+                                                        on: {
+                                                            input:  (event) => {
+                                                                this.filter.id.max = event.target.value;
+                                                                this.filterByRange('id');
+                                                            },
+                                                        },
+                                                    },
+                                                ),
+                                            ]
+                                        ),
+                                        createElement('font-awesome-icon',
+                                            {
+                                                class: {
+                                                    closeIcon: true,
+                                                },
+                                                attrs: {
+                                                    class: 'closeIcon',
+                                                },
+                                                props: {
+                                                    icon: 'times',
+                                                },
+                                                on: {
+                                                    click: () => {
+                                                        this.removeFilter('id');
+                                                    },
+                                                },
+                                            },
+                                        )
+                                    ],
+                                )
+                            ],
+                        ),
+                        // post id
+                        createElement('div', 
+                            {
+                                attrs: {
+                                    class: "filters-wrapper__line",
+                                },
+                            },
+                            [
+                                createElement('label',
+                                    {},
+                                    [
+                                        'Post ID',
+                                        createElement('input',
+                                            {
+                                                attrs: {
+                                                    type: 'number',
+                                                    name: 'post_id',
+                                                    class: 'input number',
+                                                    min: '1',
+                                                    max: '100',
+                                                },
+                                                on: {
+                                                    input:  (event) => {
+                                                        this.filter.postId = event.target.value;
+                                                        this.filterByNumber('postId');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                        createElement('font-awesome-icon',
+                                            {
+                                                class: {
+                                                    closeIcon: true,
+                                                },
+                                                attrs: {
+                                                    class: 'closeIcon',
+                                                },
+                                                props: {
+                                                    icon: 'times',
+                                                },
+                                                on: {
+                                                    click: () => {
+                                                        this.removeFilter('postId');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        // email
+                        createElement('div', 
+                            {
+                                attrs: {
+                                    class: "filters-wrapper__line",
+                                },
+                            },
+                            [
+                                createElement('label',
+                                    {},
+                                    [
+                                        'Email',
+                                        createElement('input',
+                                            {
+                                                attrs: {
+                                                    type: 'text',
+                                                    name: 'email',
+                                                    class: 'input',
+                                                    placeholder: "Введите значение"
+                                                },
+                                                on: {
+                                                    input:  (event) => {
+                                                        this.filter.email = event.target.value;
+                                                        this.filterText('email');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                        createElement('font-awesome-icon',
+                                            {
+                                                class: {
+                                                    closeIcon: true,
+                                                },
+                                                attrs: {
+                                                    class: 'closeIcon',
+                                                },
+                                                props: {
+                                                    icon: 'times',
+                                                },
+                                                on: {
+                                                    click: () => {
+                                                        this.removeFilter('email');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        // name
+                        createElement('div', 
+                            {
+                                attrs: {
+                                    class: "filters-wrapper__line",
+                                },
+                            },
+                            [
+                                createElement('label',
+                                    {},
+                                    [
+                                        'Name',
+                                        createElement('input',
+                                            {
+                                                attrs: {
+                                                    type: 'text',
+                                                    name: 'name',
+                                                    class: 'input',
+                                                    placeholder: "Введите значение"
+                                                },
+                                                on: {
+                                                    input:  (event) => {
+                                                        this.filter.name = event.target.value;
+                                                        this.filterText('name');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                        createElement('font-awesome-icon',
+                                            {
+                                                class: {
+                                                    closeIcon: true,
+                                                },
+                                                attrs: {
+                                                    class: 'closeIcon',
+                                                },
+                                                props: {
+                                                    icon: 'times',
+                                                },
+                                                on: {
+                                                    click: () => {
+                                                        this.removeFilter('name');
+                                                    },
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    // children of filter wrapper
+                    ],
+                // filter wrapper div end
+                );
+    // render function end
+    },
     props: {
         staticPaging: {
             type: Boolean,
@@ -226,132 +507,6 @@ export default {
             
             this.$emit('remove-filter',  this.staticRows);
         },
-    },
-    render() {
-        return !this.showFiltersWrapper 
-            ?  (
-                    <button 
-                        class="btn open-filter" 
-                        onClick={this.openFilter}
-                    >
-                        Filter
-                    </button> 
-                ) 
-            :   (
-                    <div class="filters-wrapper">
-                        <font-awesome-icon
-                            icon="times"
-                            class='closeIcon'
-                            onClick={this.closeFilter}
-                        />
-                        <h1>Filters</h1>  
-                        <div class="filters-wrapper__line">
-                            <label class="range-label">
-                                ID
-                                <div class="range">
-                                    <span>From</span>
-                                    <input 
-                                        type="number" 
-                                        name="id_min" 
-                                        class="input number" 
-                                        min="1" 
-                                        max="500"
-                                        v-model={this.filter.id.min}
-                                        onInput={() => {
-                                            this.filterByRange('id')
-                                        }}
-                                    />
-                                    <span>To</span>
-                                    <input 
-                                        type="number" 
-                                        name="id_max" 
-                                        class="input number" 
-                                        min="1" 
-                                        max="500"
-                                        v-model={this.filter.id.max}
-                                        onInput={() => {
-                                            this.filterByRange('id')
-                                        }}
-                                    />
-                                </div>
-                                <font-awesome-icon
-                                    icon="times"
-                                    class='closeIcon'
-                                    onClick={() => {
-                                        this.removeFilter('id');
-                                    }}
-                                />
-                            </label>
-                        </div> 
-                        <div class="filters-wrapper__line">
-                            <label>
-                                Post ID
-                                <input 
-                                    type="number" 
-                                    name="post_id" 
-                                    class="input number" 
-                                    min="1" 
-                                    max="100"
-                                    v-model={this.filter.postId}
-                                    onInput={() => {
-                                        this.filterByNumber('postId')
-                                    }}
-                                />
-                                <font-awesome-icon
-                                    icon="times"
-                                    class='closeIcon'
-                                    onClick={() => {
-                                        this.removeFilter('postId')
-                                    }}
-                                />
-                            </label>
-                        </div>
-                        <div class="filters-wrapper__line">
-                            <label>
-                                Email
-                                <input 
-                                    type="text" 
-                                    name="email" 
-                                    class="input" 
-                                    placeholder="Введите значение"
-                                    v-model={this.filter.email}
-                                    onInput={() => {
-                                        this.filterText('email')
-                                    }}
-                                />
-                                <font-awesome-icon
-                                    icon="times"
-                                    class='closeIcon'
-                                    onClick={() => {
-                                        this.removeFilter('email')
-                                    }}
-                                />
-                            </label>
-                        </div>
-                        <div class="filters-wrapper__line">
-                            <label>
-                                Name
-                                <input 
-                                    type="text" 
-                                    name="name" 
-                                    class="input" 
-                                    placeholder="Введите значение"
-                                    v-model={this.filter.name}
-                                    onInput={() => {
-                                        this.filterText('name')
-                                    }}
-                                />
-                                <font-awesome-icon
-                                    icon="times"
-                                    class='closeIcon'
-                                    onClick={() => {
-                                        this.removeFilter('name')
-                                    }}
-                                />
-                            </label>
-                        </div>
-                    </div>
-                );
     },
 };
 </script>
