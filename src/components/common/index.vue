@@ -22,6 +22,8 @@ export default {
             },
             on: {
               getPage: this.getPage,
+              // * для бесконечной пагинации
+              // getPage: this.infGetPage,
               sortList: this.sortList,
             },
           },
@@ -55,9 +57,10 @@ export default {
                       },
                     },
                   ),
-                  body: ({ row: { email } }) => {
-                    // * props : row: { name, email, ....}, 
-                    // * props.row.email
+                  // body: ({ row: { email } }) => {
+                  // * props : row: { name, email, ....}, 
+                  // * props.row.email
+                  body: ( { email }) => {
                   return createElement('a', 
                     {
                       attrs: {

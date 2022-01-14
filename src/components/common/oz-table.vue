@@ -1,4 +1,4 @@
-<script lang="jsx">
+<script>
 import eventBus from './eventBus';
 import { orderBy } from 'lodash/collection';
 import OzTablePaginator from './oz-table-paginator';
@@ -29,7 +29,7 @@ export default {
     },
     emptyMessage: {
       type: String,
-      required: true,
+      default: '',
     },
   },
   data() {
@@ -44,6 +44,7 @@ export default {
       allSortedPages: [],
     };
   },
+  components: { OzTablePaginator },
   computed: {
     // * массив данных для фильтрации. Зависит от типа пагинации
     array() {
@@ -79,10 +80,19 @@ export default {
         eventBus.$emit('sort-list', this.allSortedPages);
       }
     },
-    renderHead(h, columnsOptions) {
+    renderHead(createElement, columnsOptions) {
       const { $style, sortInfo } = this;
 
       return columnsOptions.map((column) => {
+        /* column : 
+            {
+              prop: 'id',
+              title: 'ID",
+              scopedSlots: {},
+            }
+        */
+
+        // * renderedTitle - string, eg: Id
         const renderedTitle = column.scopedSlots.title ? column.scopedSlots.title() : column.title;
         let sortIcon = 'sort';
 
@@ -90,31 +100,89 @@ export default {
           sortIcon = sortInfo.sortDirection === 'asc' ? 'sort-amount-down' : 'sort-amount-up';
         }
 
-        return (
-          <th key={column.prop} class={$style.headerCell}>
-            <div class={$style.headerCellContent}>
-              <span>{renderedTitle}</span>
-              <font-awesome-icon
-                class={$style.sortIcon}
-                icon={sortIcon}
-                on={{ click: () => this.toggleSort(column.prop) }}
-              />
-            </div>
-          </th>
+        return createElement(
+          'th',
+          {
+            attrs: {
+              key: column.prop,
+              class: $style.headerCell,
+            },
+          },
+          [
+            createElement(
+              'div',
+              {
+                attrs: {
+                  class: $style.headerCellContent,
+                },
+              },
+              [
+                createElement(
+                  'span', {}, renderedTitle,
+                ),
+                createElement('font-awesome-icon',  
+                  {
+                    class: {
+                      [$style.sortIcon]: true,
+                    },
+                    props: {
+                      icon: sortIcon,
+                    },
+                    on: {
+                      click: () => this.toggleSort(column.prop),
+                    },
+                  },
+                ),
+              ],
+            ),
+          ],
         );
       });
     },
-    renderRows(h, columnsOptions) { 
+    renderRows(createElement, columnsOptions) { 
       return this.renderedRowsArray.map((row, index) => {
-        return <tr key={row.id || index}>{...this.renderColumns(h, row, columnsOptions)}</tr>;
+        const columns = this.renderColumns(createElement, row, columnsOptions);
+
+        return createElement(
+          'tr',
+          {
+            attrs: {
+              key: row.id || index,
+            },
+          },
+          [
+            columns.map(column => {
+              return createElement(column.tag, column.data, column.children);
+            }),
+          ],
+        );
       });
     },
-    renderColumns(h, row, columnsOptions) {
+    renderColumns(createElement, row, columnsOptions) {
+      /* 
+        {
+          body: '',
+          id,
+          email,
+          postId,
+        }
+      */
       return columnsOptions.map((column) => {
-        return (
-          <td key={column.prop} class={this.$style.cell}>
-            {column.scopedSlots.body ? column.scopedSlots.body({ row }) : row[column.prop]}
-          </td>
+        return createElement(
+          'td',
+          {
+            attrs: {
+              key: column.prop,
+              class: this.$style.cell,
+            },
+          },
+          [
+            // * если есть column.scopedSlots.body, то это функция из index.js scopedSlots
+            // * row[column.prop] - содержимое ячейки, напр, 1, myEmail"gmail.com
+            column.scopedSlots.body ?
+              createElement(column.scopedSlots.body(row).tag, column.scopedSlots.body(row).data, column.scopedSlots.body(row).children) :
+              row[column.prop],
+          ],
         );
       });
     },
@@ -130,45 +198,96 @@ export default {
           )
         );
     },
-    renderInfPager() { 
-      const directives = [
+    renderInfPager(createElement) { 
+      return createElement(
+        'div',
         {
-          name: 'detect-viewport',
-          value: {
-            callback: this.$listeners.getPage
-          }
-        }
-      ];
-
-      const style = {
-        background: `url("${DotsLoaderIcon}") no-repeat center`
-      };
-
-      return (
-        <div {...{ class: this.$style.infPager, style, directives }} />
+          attrs: {
+            class: this.$style.infPager,
+          },
+          style: {
+            background: `url("${DotsLoaderIcon}") no-repeat center`
+          },
+          directives: [
+            {
+              name: 'detect-viewport',
+              value: {
+                callback: this.$listeners.getPage,
+              }
+            },
+          ],
+        },
       );
     },
   },
-  render(h) {
+  render(createElement) {
     const { $style, totalPages, currentPage, staticPaging, emptyMessage, $listeners } = this;
     const { getPage } = $listeners;
+    /* columnsOptions : 
+    [
+      {
+        prop: 'id',
+        title: 'ID",
+        scopedSlots: {},
+      },
+      ...
+    ]
+    */
     const columnsOptions = this.getColumnOptions();
-    const columnsHead = this.renderHead(h, columnsOptions);
-    const rows = this.renderRows(h, columnsOptions);
+    // * columnsHead [Vnode, ...]
+    const columnsHead = this.renderHead(createElement, columnsOptions);
+    // * rows [Vnode, ...]
+    const rows = this.renderRows(createElement, columnsOptions);
 
-    return (
-      <div>
-        <table class={$style.table}>
-          <thead>{...columnsHead}</thead>
-          <tbody ref="tbody">{...rows}</tbody>
-          { emptyMessage || ""}
-        </table>
-        {staticPaging
-        
-          ? <OzTablePaginator totalPages={totalPages} currentPage={currentPage} on={{ getPage: getPage }} />
-          : this.renderInfPager()
-        }
-      </div>
+    return createElement(
+      'div',
+        {},
+        [
+          createElement('table', 
+            {
+              attrs: {
+                class: $style.table,
+              },
+            },
+            [
+              createElement('thead', 
+                {},
+                [
+                  columnsHead.map(child => {
+                    // * child - VNode
+                    return createElement(child.tag, child.data, child.children);
+                  }),
+                ],
+              ),
+              createElement('tbody', 
+                {
+                  ref: 'tbody',
+                },
+                [
+                  rows.map(child => {
+                    // * child - VNode
+                    return createElement(child.tag, child.data, child.children);
+                  }),
+                ],
+              ),
+              emptyMessage,
+            ],
+          ),
+          staticPaging ? 
+            createElement(
+              'OzTablePaginator',
+              {
+                props: {
+                  totalPages,
+                  currentPage,
+                },
+                on: {
+                  getPage,
+                },
+              },
+            ) :
+            this.renderInfPager(createElement),
+        ],
     );
   }
 };
