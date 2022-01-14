@@ -17,7 +17,10 @@ export default {
 
       if (currentPage <= 3) {
         if (totalPages < 5) {
-          return Array(totalPages).fill(null).map(index => index + 1);
+          // * исправлена ошибка: когда после  фильтрации меньше 5 страниц,
+          // * получали массив страниц типа [1, 1, 2, 3, ...]
+          // * в map (index)  index был null, то есть сам элемент, а не индекс
+          return Array(totalPages).fill(null).map((item, index) => index + 1);
         }
 
         return [1, 2, 3, 4, 5];

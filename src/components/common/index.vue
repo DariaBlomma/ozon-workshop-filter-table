@@ -171,14 +171,12 @@ export default {
     },
     // * используется при статической пагинации
     sortList(list) {
-      console.log('in sort list')
       if (this.staticPaging) {
         this.preparePages(list);
         this.getPage(this.currentPage);
       }
     },
     filterList(list) {
-      console.log('in filter list')
       this.hasFilter = true;
       
       if (this.staticPaging) {
@@ -186,20 +184,18 @@ export default {
         this.getPage(this.currentPage);
       } else {
         this.rows = list;
-        // console.log('in filter this.rows: ', this.rows);
         }
     },
     removeFilter(list) {
       this.hasFilter = false; 
       this.rows = this.fetchedRows; 
-      // console.log('in removeFilter');
 
       if (this.staticPaging) {
         this.preparePages(list);
         this.getPage(this.currentPage);
       }
     },
-    // создает разбитый на страницы массив
+    // * создает разбитый на страницы массив
     preparePages(array) {
       if (array.length) {
         const list = [];
@@ -216,14 +212,9 @@ export default {
     },
     async fetchNextPage() {
       try { 
-        // console.log('in fetch next page')
         this.newRowsFetched = false;
         this.prevFetchedPage = this.currentPage;
-        // console.log(' this.prevFetchedPage: ',  this.prevFetchedPage);
-        // console.log('this.currentPage + 1: ', this.currentPage + 1);
-        if (this.prevFetchedPage === this.currentPage + 1) {
-          console.log('already fetched page')
-        }
+
         const res = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${this.currentPage + 1}`);
         this.newRows = await res.json();
         this.nextPageFetchedCount++;
@@ -241,7 +232,6 @@ export default {
     },
     // * также вызывается, когда после фильтрации недостаточно рядов
     async infGetPage() {
-      // console.log('in inf pager');
       this.blockingPromise && await this.blockingPromise;
     
       // * проверка, что не получаем 2 раза ту же страницу (происходит при сбросе фильтра по несуществующим данным)

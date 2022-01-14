@@ -424,7 +424,6 @@ export default {
             this.numberIsFiltered = false;
             this.rangeIsFiltered = true;
             this.hasFilter = true;
-            console.log('in filter by range');
             this.activeFilterProp = property;
             // ! при множественной фильтрации изменится array
 
@@ -449,10 +448,9 @@ export default {
 
             // * так работает сброс
             if (!this.filter[property].min && !this.filter[property].max) {
-                console.log('will return')
                 return this.filteredList;
             }
-            console.log('this.filteredList: ', this.filteredList);
+
             if (this.refilter) {
                 this.$emit('fetch-for-filter')
             }
@@ -463,13 +461,11 @@ export default {
             this.rangeIsFiltered = false;
             this.numberIsFiltered = true;
             this.hasFilter = true;
-            console.log('in filter by number');
             this.activeFilterProp = property;
             // ! при множественной фильтрации изменится array
 
             this.filteredList =  this.array.filter(row => row[property] === parseInt(this.filter[property]));
 
-            // console.log('this.filteredList: ', this.filteredList);
             if (this.refilter) {
                 this.$emit('fetch-for-filter')
             }
@@ -481,12 +477,9 @@ export default {
             this.numberIsFiltered = false;
             this.hasFilter = true;
 
-            console.log('in filter text')
             this.activeFilterProp = property;
 
             this.filteredList =  this.array.filter(row => row[property].search(this.filter[property]) > -1);
-            // console.log('this.filteredList: ', this.filteredList);
-            console.log('refilter in filter text', this.refilter);
             //  * в другом месте вызов fetch-for-filter блокирует перефильтрацию
             if (this.refilter) {
                 this.$emit('fetch-for-filter')
@@ -505,7 +498,7 @@ export default {
                 this.filter[property] = "";
             }
             
-            this.$emit('remove-filter',  this.staticRows);
+            this.$emit('removeFilter',  this.staticRows);
         },
     },
 };
